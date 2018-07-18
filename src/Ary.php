@@ -3,26 +3,20 @@
 namespace Zane\Utils;
 
 use Closure;
+use TypeError;
 
 class Ary
 {
-    protected static $keysSearchValue = null;
-
-    protected static $keyStrict = true;
-
-    protected static $eachUserData = null;
-
-    protected static $toJsonOptions = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT;
-
-    protected static $toJsonDepth = 512;
-
-    protected static $fromJsonAssoc = false;
-
-    protected static $fromJsonOptions = 0;
-
-    protected static $fromJsonDepth = 512;
-
-    protected static $popGetElement = true;
+    protected static $config = [
+        'keysSearchValue' => null,
+        'keysStrict'      => true,
+        'toJsonOptions'   => JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT,
+        'toJsonDepth'     => 512,
+        'fromJsonAssoc'   => false,
+        'fromJsonOptions' => 0,
+        'fromJsonDepth'   => 512,
+        'popGetElement'   => true
+    ];
 
     protected $val;
 
@@ -44,30 +38,37 @@ class Ary
 
     public function values(): self
     {
-        return new static(array_values($this->val));
+        return static::new(array_values($this->val));
     }
 
-    public function keys($searchValue, $strict): self
+    public function keys($searchValue = null, $strict = null): self
     {
+        // 实参个数为零时直接调用 array_keys 函数
+        // 若此时调用 array_keys 函数时带入 $searchValue 和 $strict 参数会导致 array_keys 返回 数组值为 null 的键名, 与预期结果不符
+        $args = func_num_args();
+        if ($args === 0) {
+            return static::new(array_keys($this->val));
+        }
+
         return static::new(
             array_keys(
                 $this->val,
-                static::config($searchValue, static::$keysSearchValue),
-                static::config($strict, static::$keyStrict)
+                static::config('keysSearchValue', $searchValue),
+                static::config('keysStrict', $strict)
             )
         );
     }
 
     public function reverse()
     {
-        array_reverse($this->val);
+        $this->val = array_reverse($this->val);
 
         return $this;
     }
 
-    public function push($element): self
+    public function push(...$element): self
     {
-        array_push($this->val, $element);
+        array_push($this->val, ...$element);
 
         return $this;
     }
@@ -75,7 +76,7 @@ class Ary
     public function pop(bool $getElement = null)
     {
         $element = array_pop($this->val);
-        if (static::config($getElement, static::$popGetElement)) {
+        if (static::config('popGetElement', $getElement)) {
             return $element;
         }
 
@@ -85,12 +86,18 @@ class Ary
     public function merge($array): self
     {
         if (is_array($array)) {
-            array_merge($this->val, $array);
+            $val = array_merge($this->val, $array);
         } elseif ($array instanceof static) {
-            array_merge($this->val, $array->val());
+            $val = array_merge($this->val, $array->val());
+        } else {
+            throw new TypeError(
+                "Argument 1 passed to Zane\Utils\Ary::merge() must be an instance of Zane\Utils\Ary or array =>"
+                . ' file: ' . __FILE__
+                . ' line: ' . __LINE__
+            );
         }
 
-        return $this;
+        return static::new($val);
     }
 
     public function map(Closure $closure): self
@@ -102,12 +109,12 @@ class Ary
 
     public function each(Closure $closure, $userData = null): self
     {
-        array_walk($this->val, $closure, static::config($userData, static::$eachUserData));
+        array_walk($this->val, $closure, $userData);
 
         return $this;
     }
 
-    public function reduce(Closure $closure, $initial)
+    public function reduce(Closure $closure, $initial = null)
     {
         return array_reduce($this->val, $closure, $initial);
     }
@@ -116,8 +123,8 @@ class Ary
     {
         return json_encode(
             $this->val,
-            static::config($options, static::$toJsonOptions),
-            static::config($depth, static::$toJsonDepth)
+            static::config('toJsonOptions', $options),
+            static::config('toJsonDepth', $depth)
         );
     }
 
@@ -126,29 +133,36 @@ class Ary
         return new static($array);
     }
 
+    public static function setConfig(array $config): void
+    {
+        foreach ($config as $key => $val) {
+            static::$config[$key] = $val;
+        }
+    }
+
     public static function fromJson(string $json, bool $assoc = null, int $depth = null, int $options = null): self
     {
-        return new static(
+        return static::new(
             json_decode(
                 $json,
-                static::config($assoc, static::$fromJsonAssoc),
-                static::config($depth, static::$fromJsonDepth),
-                static::config($options, static::$fromJsonDepth)
+                static::config('fromJsonAssoc', $assoc),
+                static::config('fromJsonDepth', $depth),
+                static::config('fromJsonDepth', $options)
             )
         );
     }
 
-    public function combine(self $aryA, self $aryB): self
+    public function combine(self $key, self $val): self
     {
-        return new static(
-            array_combine($aryA->val(), $aryB->val())
+        return static::new(
+            array_combine($key->val(), $val->val())
         );
     }
 
-    protected static function config($val, $default)
+    protected static function config(string $key, $val = null)
     {
         if (is_null($val)) {
-            return $default;
+            return static::$config[$key] ?? null;
         }
 
         return $val;
