@@ -4,12 +4,15 @@ namespace Zane\Utils;
 
 use Closure;
 use TypeError;
+use IteratorAggregate;
+use ArrayIterator;
 
-class Ary
+class Ary implements IteratorAggregate
 {
     protected static $config = [
         'keysSearchValue' => null,
         'keysStrict'      => true,
+        'preserveKeys'    => false,
         'toJsonOptions'   => JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT,
         'toJsonDepth'     => 512,
         'fromJsonAssoc'   => false,
@@ -59,11 +62,32 @@ class Ary
         );
     }
 
-    public function reverse()
+    public function first()
     {
-        $this->val = array_reverse($this->val);
+        return reset($this->val);
+    }
 
-        return $this;
+    public function end()
+    {
+        return end($this->val);
+    }
+
+    public function limit(int $num, bool $preserveKeys = null): self
+    {
+        if ($num < 0) {
+            return static::new([]);
+        }
+
+        $val = array_slice($this->val, 0, $num, self::config('preserveKeys', $preserveKeys));
+
+        return static::new($val);
+    }
+
+    public function reverse(): self
+    {
+        $val = array_reverse($this->val);
+
+        return static::new($val);
     }
 
     public function push(...$element): self
@@ -102,9 +126,9 @@ class Ary
 
     public function map(Closure $closure): self
     {
-        $this->val = array_map($closure, $this->val);
+        $val = array_map($closure, $this->val);
 
-        return $this;
+        return static::new($val);
     }
 
     public function each(Closure $closure, $userData = null): self
@@ -126,6 +150,11 @@ class Ary
             static::config('toJsonOptions', $options),
             static::config('toJsonDepth', $depth)
         );
+    }
+
+    public function getIterator()
+    {
+        return new ArrayIterator($this->val);
     }
 
     public static function new(array $array = []): self

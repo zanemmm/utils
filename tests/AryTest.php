@@ -49,6 +49,46 @@ class AryTest extends TestCase
         $this->assertEquals(array_keys($array, null), $ary->keys(null, false)->val());
     }
 
+    public function testFirst()
+    {
+        $array = [1, 2, 3];
+        $ary = Ary::new($array);
+
+        $this->assertEquals($array[0], $ary->first());
+
+        $array = ['a' => 1, 2, 3];
+        $ary = Ary::new($array);
+
+        $this->assertEquals($array['a'], $ary->first());
+    }
+
+    public function testEnd()
+    {
+        $array = [1, 2, 3];
+        $ary = Ary::new($array);
+
+        $this->assertEquals($array[2], $ary->end());
+
+        $array = [1, 2, 'b' => 3];
+        $ary = Ary::new($array);
+
+        $this->assertEquals($array['b'], $ary->end());
+    }
+
+    public function testLimit()
+    {
+        $array = ["a" => 1, "b" => 3, 99 => 4, 5, 6];
+        $ary = Ary::new($array);
+
+        $this->assertEquals(["a" => 1, "b" => 3, 4], $ary->limit(3)->val());
+
+        $this->assertEquals($array, $ary->limit(100, true)->val());
+
+        $this->assertEmpty($ary->limit(0)->val());
+
+        $this->assertEmpty($ary->limit(-1)->val());
+    }
+
     public function testReverse()
     {
         $array = ['a' => 0, 'b' => 0, 'c' => '1', 'd' => 1, 0, 1, 2, 'e' => null, 'f' => []];
@@ -109,4 +149,6 @@ class AryTest extends TestCase
         // merge error type
         $aryA->merge("test");
     }
+
+
 }
