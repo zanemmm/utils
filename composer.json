@@ -1,0 +1,21 @@
+{
+    "name": "zane/utils",
+    "type": "library",
+    "require-dev": {
+        "phpunit/phpunit": "^7.2"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "zane",
+            "email": "pi@0php.net"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Zane\\Utils\\": "src/"
+        }
+    },
+    "minimum-stability": "dev",
+    "require": {}
+}
