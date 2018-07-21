@@ -89,6 +89,17 @@ class AryTest extends TestCase
         $this->assertEmpty($ary->limit(-1)->val());
     }
 
+    public function testSlice()
+    {
+        $array = ["a" => 1, "b" => 3, 99 => 4, 5, 6];
+        $ary = Ary::new($array);
+
+        $this->assertEquals(array_slice($array, 0, 3), $ary->slice(0, 3)->val());
+        $this->assertEquals(array_slice($array, -1, 3), $ary->slice(-1, 3)->val());
+        $this->assertEquals(array_slice($array, -1, 100), $ary->slice(-1, 100)->val());
+        $this->assertEquals(array_slice($array, -1, 0), $ary->slice(-1, 0)->val());
+    }
+
     public function testReverse()
     {
         $array = ['a' => 0, 'b' => 0, 'c' => '1', 'd' => 1, 0, 1, 2, 'e' => null, 'f' => []];
@@ -125,11 +136,23 @@ class AryTest extends TestCase
         $this->assertEquals($array, $ary->val());
     }
 
+    public function testJoin()
+    {
+        $a = ['hello', 'world', '!'];
+        $aryA = Ary::new($a);
+
+        $this->assertEquals(implode(' ', $a), $aryA->join(' '));
+
+        $b = ['I', 'am', 'utils', $aryA];
+        $aryB = Ary::new($b);
+        $this->assertEquals('I am utils hello world !', $aryB->join(' '));
+    }
+
     /**
      * @expectedException TypeError
      * @throws TypeError
      */
-    public function testMerge()
+    public function testAppend()
     {
         $a = [1, 2, 3, 4];
         $b = ['a', 'b', 'c', 'd'];
@@ -138,17 +161,41 @@ class AryTest extends TestCase
         $aryA = Ary::new($a);
         $aryB = Ary::new($b);
 
-        // merge Ary
-        $aryAB = $aryA->merge($aryB);
+        // append Ary
+        $aryAB = $aryA->append($aryB);
         $this->assertEquals($ab, $aryAB->val());
 
-        // merge array
-        $aryAB = $aryA->merge($b);
+        // append array
+        $aryAB = $aryA->append($b);
         $this->assertEquals($ab, $aryAB->val());
 
-        // merge error type
-        $aryA->merge("test");
+        // append error type
+        $aryA->append("test");
+
+        // preserve keys
+        $a = [1, 2, 3];
+        $b = [4, 5, 6, 7, 99 => 100];
+        $aryA->val($a);
+
+        $this->assertEquals([1, 2, 3, 7, 99 => 100], $aryA->append($b, true));
     }
 
+    public function testClean()
+    {
+        $a = [0 => 'foo', 1 => false, 2 => -1, 3 => null, 4 => ''];
+        $ary = Ary::new($a);
 
+        $this->assertEquals(['foo', 2 => -1], $ary->clean()->val());
+    }
+
+    public function testIteratorAggregate()
+    {
+        $a = ['a' => 0, 'b' => 1, 'c' => 2, 3, 4, 5];
+
+        $ary = Ary::new($a);
+
+        foreach ($ary as $key => $val) {
+            $this->assertEquals($a[$key], $val);
+        }
+    }
 }
