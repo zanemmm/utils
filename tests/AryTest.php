@@ -148,10 +148,6 @@ class AryTest extends TestCase
         $this->assertEquals('I am utils hello world !', $aryB->join(' '));
     }
 
-    /**
-     * @expectedException TypeError
-     * @throws TypeError
-     */
     public function testAppend()
     {
         $a = [1, 2, 3, 4];
@@ -165,19 +161,13 @@ class AryTest extends TestCase
         $aryAB = $aryA->append($aryB);
         $this->assertEquals($ab, $aryAB->val());
 
-        // append array
-        $aryAB = $aryA->append($b);
-        $this->assertEquals($ab, $aryAB->val());
-
-        // append error type
-        $aryA->append("test");
-
-        // preserve keys
+        // preserve values
         $a = [1, 2, 3];
         $b = [4, 5, 6, 7, 99 => 100];
         $aryA->val($a);
+        $aryB->val($b);
 
-        $this->assertEquals([1, 2, 3, 7, 99 => 100], $aryA->append($b, true));
+        $this->assertEquals([1, 2, 3, 7, 99 => 100], $aryA->append($aryB, true)->val());
     }
 
     public function testClean()
