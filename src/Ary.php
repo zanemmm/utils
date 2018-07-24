@@ -1,14 +1,13 @@
 <?php
-
 namespace Zane\Utils;
 
-use TypeError;
 use IteratorAggregate;
 use ArrayAccess;
 use ArrayIterator;
 use Countable;
+use JsonSerializable;
 
-class Ary implements IteratorAggregate, ArrayAccess, Countable
+class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
 {
     protected static $config = [
         'keysSearchValue'      => null,
@@ -25,6 +24,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         'uniqueFlag'           => SORT_REGULAR,
         'natSortCaseSensitive' => true,
         'joinGlue'             => '',
+        'eachRecursive'        => false,
         'filterFlag'           => 0,
         'toJsonOptions'        => JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT,
         'toJsonDepth'          => 512,
@@ -46,6 +46,11 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         $this->val = $array;
     }
 
+    /**
+     * 获取或设置该实例的数组
+     * @param array|null $array 为空时获取实例的数组，非空时设置实例的数组
+     * @return $this|array 原实例或数组
+     */
     public function val(array $array = null)
     {
         if (is_null($array)) {
@@ -57,11 +62,23 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         return $this;
     }
 
+    /**
+     * 获取实例数组中的全部值
+     * @link http://php.net/manual/zh/function.array-values.php
+     * @return Ary 新实例
+     */
     public function values(): self
     {
         return static::new(array_values($this->val));
     }
 
+    /**
+     * 获取实例数组中的键
+     * @link http://php.net/manual/zh/function.array-keys.php
+     * @param null $searchValue 空则返回全部键，非空则返回对应 $searchValue 值的键
+     * @param null $strict 为真时数组中的值与 $searchValue 采用严格比较
+     * @return Ary 新实例
+     */
     public function keys($searchValue = null, $strict = null): self
     {
         // 实参个数为零时直接调用 array_keys 函数
@@ -80,31 +97,54 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         );
     }
 
+    /**
+     * 获取实例数组中第一个元素的值
+     * @return mixed
+     */
     public function first()
     {
         return reset($this->val);
     }
 
+    /**
+     * 获取实例数组中最后一个元素的值
+     * @return mixed
+     */
     public function end()
     {
         return end($this->val);
     }
 
+    /**
+     * 获取实例数组中第一个元素的键
+     * @return int|null|string
+     */
     public function firstKey()
     {
         $this->first();
         return key($this->val);
     }
 
+    /**
+     * 获取实例数组中最后一个元素的键
+     * @return int|null|string
+     */
     public function endKey()
     {
         $this->end();
         return key($this->val);
     }
 
+    /**
+     * 获取实例数组中前 $len 个元素组成的新 Ary 实例
+     * @see \Zane\Utils\Ary::slice()
+     * @param int $len 获取元素的个数，小于等于 0 或大于实例数组的长度，则返回空数组的实例
+     * @param bool|null $preserveKeys 为 true 则数字索引保持不变，false 则会重置数组的数字索引
+     * @return Ary 新实例
+     */
     public function limit(int $len, bool $preserveKeys = null): self
     {
-        if ($len < 0) {
+        if ($len <= 0) {
             return static::new([]);
         }
 
@@ -113,6 +153,14 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         return static::new($val);
     }
 
+    /**
+     * 从实例数组中取出一段并返回新的实例
+     * @link http://php.net/manual/zh/function.array-slice.php
+     * @param int $offset 起始偏移量
+     * @param int $len 长度
+     * @param bool|null $preserveKeys 为 true 则数字索引保持不变，false 则会重置数组的数字索引
+     * @return Ary 新实例
+     */
     public function slice(int $offset, int $len, bool $preserveKeys = null): self
     {
         $val = array_slice($this->val, $offset, $len, static::config('slicePreserveKeys', $preserveKeys));
@@ -120,6 +168,13 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         return static::new($val);
     }
 
+    /**
+     * 将一个实例数组分割为多个并返回多个新实例
+     * @link http://php.net/manual/zh/function.array-chunk.php
+     * @param int $size 每个新实例数组的大小，最后一个实例数组可能小于 $size
+     * @param bool $preserveKeys 为 true 则数字索引保持不变，false 则会重置数组的数字索引
+     * @return Ary 新实例
+     */
     public function chunk(int $size, bool $preserveKeys): self
     {
         $chunks = array_chunk($this->val, $size, static::config('chunkPreserveKeys', $preserveKeys));
@@ -132,36 +187,84 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         return static::new($val);
     }
 
+    /**
+     * 返回由实例数组中指定的一列所组成的新实例
+     * @link http://php.net/manual/zh/function.array-column.php
+     * @param mixed $columnKey 需要返回值的列，它可以是索引数组的列索引，或者是关联数组的列的键，也可以是属性名，为 NULL 时返回整个数组
+     * @param null $indexKey 作为返回数组的索引或键的列
+     * @return Ary 新实例
+     */
     public function column($columnKey, $indexKey = null): self
     {
         return static::new(array_column($this->val, $columnKey, $indexKey));
     }
 
+    /**
+     * 统计实例数组中值的出现次数,
+     * 返回一个键为原数组的值，值为原数组值出现的次数的新实例
+     * @link http://php.net/manual/zh/function.array-count-values.php
+     * @return Ary 新实例
+     */
     public function countValues(): self
     {
         return static::new(array_count_values($this->val));
     }
 
+    /**
+     * 交换实例数组中的键和值并返回新的实例
+     * @link http://php.net/manual/zh/function.array-flip.php
+     * @return Ary 新实例
+     */
     public function flip(): self
     {
         return static::new(array_flip($this->val));
     }
 
+    /**
+     * 检查实例数组中是否存在某个值
+     * @link http://php.net/manual/zh/function.in-array.php
+     * @param mixed $needle 要检查的值
+     * @param bool|null $strict 是否严格比较
+     * @return bool
+     */
     public function exist($needle, bool $strict = null): bool
     {
         return in_array($needle, $this->val, static::config('existStrict', $strict));
     }
 
+    /**
+     * 检查实例数组里是否有指定的键名或索引
+     * @link http://php.net/manual/zh/function.array-key-exists.php
+     * @param int|string $key 要检查的键
+     * @return bool
+     */
     public function keyExist($key): bool
     {
         return array_key_exists($key, $this->val);
     }
 
+    /**
+     * 检查实例数组存在指定键名的值，且值不为 null
+     * @link http://php.net/manual/zh/function.isset.php
+     * @param int|string $key
+     * @return bool
+     */
     public function isSet($key): bool
     {
         return isset($key, $this->val);
     }
 
+    /**
+     * 对实例数组的值进行排序
+     * @link http://php.net/manual/zh/function.sort.php
+     * @link http://php.net/manual/zh/function.rsort.php
+     * @link http://php.net/manual/zh/function.asort.php
+     * @link http://php.net/manual/zh/function.arsort.php
+     * @param bool|null $asc true为升序，false为降序
+     * @param bool|null $preserveKeys 为 true 则数字索引保持不变，false 则会重置数组的数字索引
+     * @param int|null $flag 排序类型标记，参见 PHP 手册 sort 函数
+     * @return Ary 原实例
+     */
     public function sort(bool $asc = null, bool $preserveKeys = null, int $flag = null): self
     {
         // 通过将 $asc 左移一位并加上 $preserveKeys 得出范围在 0b00 到 0b11 的 $status
@@ -191,6 +294,14 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         return $this;
     }
 
+    /**
+     * 使用用户自定义的比较函数对数组中的值进行排序
+     * @link http://php.net/manual/zh/function.usort.php
+     * @link http://php.net/manual/zh/function.uasort.php
+     * @param callable $fn 比较函数
+     * @param bool|null $preserveKeys true 则保持索引关联，false 则以数字索引重置
+     * @return Ary 原实例
+     */
     public function userSort(callable $fn, bool $preserveKeys = null): self
     {
         if (static::config('userSortPreserveKeys', $preserveKeys)) {
@@ -202,13 +313,13 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         return $this;
     }
 
-    public function userKeySort(callable $fn): self
-    {
-        uksort($this->val, $fn);
-
-        return $this;
-    }
-
+    /**
+     * 用“自然排序”算法对实例数组的值进行排序
+     * @link http://php.net/manual/zh/function.natsort.php
+     * @link http://php.net/manual/zh/function.natcasesort.php
+     * @param bool|null $caseSensitive 大小写敏感
+     * @return Ary 原实例
+     */
     public function natSort(bool $caseSensitive = null): self
     {
         if (static::config('natSortCaseSensitive', $caseSensitive)) {
@@ -220,6 +331,13 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         return $this;
     }
 
+    /**
+     * 对实例数组按照键名排序
+     * @link http://php.net/manual/zh/function.ksort.php
+     * @param bool|null $asc true 为升序，false 为降序
+     * @param int|null $flag 排序类型标记，参见 PHP 手册 sort 函数
+     * @return Ary 原实例
+     */
     public function keySort(bool $asc = null, int $flag = null): self
     {
         if (static::config('keySortAsc', $asc)) {
@@ -231,6 +349,24 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         return $this;
     }
 
+    /**
+     * 使用用户自定义的比较函数对数组中的键名进行排序
+     * @link http://php.net/manual/zh/function.uksort.php
+     * @param callable $fn 比较函数
+     * @return Ary 原实例
+     */
+    public function userKeySort(callable $fn): self
+    {
+        uksort($this->val, $fn);
+
+        return $this;
+    }
+
+    /**
+     * 打乱实例数组顺序
+     * @link http://php.net/manual/zh/function.shuffle.php
+     * @return Ary 原实例
+     */
     public function shuffle(): self
     {
         // todo 检查是否打乱成功
@@ -239,11 +375,24 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         return $this;
     }
 
-    public function unique($flag): self
+    /**
+     * 移除实例数组中重复的值
+     * @link http://php.net/manual/zh/function.array-unique.php
+     * @param int $flag 排序类型标记
+     * @return Ary 新实例
+     */
+    public function unique(int $flag): self
     {
-        return array_unique($this->val, static::config('uniqueFlag', $flag));
+        $val = array_unique($this->val, static::config('uniqueFlag', $flag));
+
+        return static::new($val);
     }
 
+    /**
+     * 返回单元顺序相反的实例数组
+     * @link http://php.net/manual/zh/function.array-reverse.php
+     * @return Ary 新实例
+     */
     public function reverse(): self
     {
         $val = array_reverse($this->val);
@@ -251,6 +400,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         return static::new($val);
     }
 
+    /**
+     * 向实例数组的末尾插入元素（入栈）
+     * @link http://php.net/manual/zh/function.array-push.php
+     * @param array ...$elements 插入的元素，可为任意多个
+     * @return Ary 原实例
+     */
     public function push(...$elements): self
     {
         array_push($this->val, ...$elements);
@@ -258,6 +413,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         return $this;
     }
 
+    /**
+     * 弹出一个实例数组末尾的元素（出栈）
+     * @link http://php.net/manual/zh/function.array-pop.php
+     * @param bool|null $getElement true 则返回元素值，false 则返回原实例
+     * @return $this|mixed 原实例或元素值
+     */
     public function pop(bool $getElement = null)
     {
         $element = array_pop($this->val);
@@ -268,6 +429,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         return $this;
     }
 
+    /**
+     * 在实例数组开头插入元素
+     * @link http://php.net/manual/zh/function.array-unshift.php
+     * @param array ...$elements 插入的元素可为任意多个
+     * @return Ary 原实例
+     */
     public function unShift(...$elements): self
     {
         array_unshift($this->val, ...$elements);
@@ -275,6 +442,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         return $this;
     }
 
+    /**
+     * 弹出一个实例数组开头的元素
+     * @link http://php.net/manual/zh/function.array-shift.php
+     * @param bool|null $getElement true 则返回元素值，false 则返回原实例
+     * @return $this|mixed 原实例或元素值
+     */
     public function shift(bool $getElement = null)
     {
         $element = array_shift($this->val);
@@ -285,6 +458,13 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         return $this;
     }
 
+    /**
+     * 向实例数组尾部追加一个实例数组
+     * @link http://php.net/manual/zh/function.array-merge.php
+     * @param Ary $array 要追加的数组
+     * @param bool|null $preserveValues true 则相同键名（包括数字索引）不会覆盖原实例数组，false 相同键名会覆盖原实例数组，数字索引会重新索引
+     * @return Ary 新实例
+     */
     public function append(self $array, bool $preserveValues = null): self
     {
         $preserveValues = static::config('appendPreserveValues', $preserveValues);
@@ -297,11 +477,24 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         return static::new($val);
     }
 
+    /**
+     * 在数组中搜索给定的值，如果成功则返回首个相应的键名
+     * @link http://php.net/manual/zh/function.array-search.php
+     * @param mixed $needle 要搜索的值
+     * @param bool|null $strict 是否采用严格比较
+     * @return false|int|string 搜索结果的键名或 false
+     */
     public function search($needle, bool $strict = null)
     {
         return array_search($needle, $this->val, static::config('searchStrict', $strict));
     }
 
+    /**
+     * 获取第一个指定值之前的元素所组成的实例数组
+     * @param mixed $needle 指定值
+     * @param bool|null $contain 结果是否包含指定值
+     * @return Ary 新实例
+     */
     public function before($needle, bool $contain = null): self
     {
         // keys 将原数组的键作为值重新索引为新的数组
@@ -315,6 +508,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         return $this->slice(0, $len, true);
     }
 
+    /**
+     * 获取第一个指定值之后的元素所组成的实例数组
+     * @param mixed $needle 指定值
+     * @param bool|null $contain 结果是否包含指定值
+     * @return Ary 新实例
+     */
     public function after($needle, bool $contain = null)
     {
         // 原理与 before 相同
@@ -325,7 +524,13 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
 
         return $this->slice($offset, null, true);
     }
-    
+
+    /**
+     * 使用传递的实例数组替换原实例数组中的元素
+     * @link http://php.net/manual/zh/function.array-replace.php
+     * @param Ary[] ...$arrays 替换的实例数组
+     * @return Ary 新实例
+     */
     public function replace(Ary ...$arrays): self
     {
         $ary = static::new($arrays);
@@ -335,15 +540,11 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         );
     }
 
-    public function replaceRecursive(Ary ...$arrays): self
-    {
-        $ary = static::new($arrays);
-
-        return static::new(
-            array_replace_recursive($this->val, ...$ary->toArray(true))
-        );
-    }
-
+    /**
+     * 清除实例数组中所有等值为 false 的元素（包括： null false 0 '' []）
+     * @link http://php.net/manual/zh/function.array-filter.php
+     * @return Ary 原实例
+     */
     public function clean(): self
     {
         $this->val = array_filter($this->val);
@@ -351,6 +552,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         return $this;
     }
 
+    /**
+     * 将实例数组连接为字符串
+     * @link http://php.net/manual/zh/function.implode.php
+     * @param string|null $glue 元素间连接的字符串，默认为 ''
+     * @return string
+     */
     public function join(string $glue = null): string
     {
         // 当 val 数组中存在 Ary 实例时，其魔术方法 __toString 会同样调用 join 方法，并以 $config 中 joinGlue 的值为 $glue
@@ -363,13 +570,31 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         return $str;
     }
 
-    public function each(callable $fn, $userData = null): self
+    /**
+     * 使用用户自定义函数对实例数组中的每个元素做回调处理
+     * @link http://php.net/manual/zh/function.array-walk.php
+     * @param callable $fn 使用的回调函数
+     * @param null $userData 用户数据，回调函数的第三个参数
+     * @param bool $recursive 是否递归实例数组
+     * @return Ary 原实例
+     */
+    public function each(callable $fn, $userData = null, bool $recursive = null): self
     {
-        array_walk($this->val, $fn, $userData);
+        if (static::config('eachRecursive', $recursive)) {
+            array_walk_recursive($this->toArray(true), $fn, $userData);
+        } else {
+            array_walk($this->val, $fn, $userData);
+        }
 
         return $this;
     }
 
+    /**
+     * 为实例数组的每个元素应用回调函数
+     * @link http://php.net/manual/zh/function.array-map.php
+     * @param callable $fn 使用的回调函数
+     * @return Ary 新实例
+     */
     public function map(callable $fn): self
     {
         $val = array_map($fn, $this->val);
@@ -377,6 +602,13 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         return static::new($val);
     }
 
+    /**
+     * 用回调函数过滤实例数组中的元素
+     * @link http://php.net/manual/zh/function.array-filter.php
+     * @param callable $fn 使用的回调函数
+     * @param int|null $flag 决定callback接收的参数形式
+     * @return Ary 新实例
+     */
     public function filter(callable $fn, int $flag = null): self
     {
         $val = array_filter($this->val, $fn, static::config('filterFlag', $flag));
@@ -384,31 +616,77 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         return static::new($val);
     }
 
+    /**
+     * 用回调函数迭代地将实例数组简化为单一的值
+     * @link http://php.net/manual/zh/function.array-reduce.php
+     * @param callable $fn 使用的回调函数
+     * @param null $initial 回调函数初始值
+     * @return mixed
+     */
     public function reduce(callable $fn, $initial = null)
     {
         return array_reduce($this->val, $fn, $initial);
     }
 
-    public function pad(int $size, $element)
+    /**
+     * 以指定长度将一个值填充进实例数组
+     * @link http://php.net/manual/zh/function.array-pad.php
+     * @param int $size 新实例数组的长度
+     * @param mixed $element 填充的值
+     * @return Ary 新实例
+     */
+    public function pad(int $size, $element): self
     {
-        array_pad($this->val, $size, $element);
+        $val = array_pad($this->val, $size, $element);
+
+        return static::new($val);
     }
 
+    /**
+     * 判断实例数组是否为空
+     * @link http://php.net/manual/zh/function.empty.php
+     * @return bool
+     */
+    public function empty(): bool
+    {
+        return empty($this->val);
+    }
+
+    /**
+     * 计算实例数组中所有值的乘积
+     * @link http://php.net/manual/zh/function.array-product.php
+     * @return number
+     */
+    public function product(): number
+    {
+        return array_product($this->val);
+    }
+
+    /**
+     * 确认实例数组中没有等值为 false 的值，包括： false null 0 '' []
+     * @return bool
+     */
     public function allTrue(): bool
     {
         return (bool)$this->product();
     }
 
-    public function product(): float
-    {
-        return array_product($this->val);
-    }
-
-    public function sum(): float
+    /**
+     * 对实例数组中所有值求和
+     * @link http://php.net/manual/zh/function.array-sum.php
+     * @return number
+     */
+    public function sum(): number
     {
         return array_sum($this->val);
     }
 
+    /**
+     * 从实例数组中随机取出一个或多个元素组成新的实例
+     * @link http://php.net/manual/zh/function.array-rand.php
+     * @param int $num 取出数量
+     * @return Ary
+     */
     public function rand(int $num): self
     {
         // todo 抛出异常
@@ -420,6 +698,20 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         return static::new($val);
     }
 
+    /**
+     * 从实例数组中随机取出一个元素
+     * @return mixed
+     */
+    public function randElement()
+    {
+        return array_rand($this->val, 1);
+    }
+
+    /**
+     * 将实例数组转成普通数组
+     * @param bool|null $recursive true 则递归调用，false 则只会将当前实例数组中的 Ary 元素转为数组后便不再递归
+     * @return array
+     */
     public function toArray(bool $recursive = null): array
     {
         $array = [];
@@ -444,7 +736,13 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         return $array;
     }
 
-    public function toJson(int $options = null, int $depth = 512): string
+    /**
+     * 将实例数组转为 json 字符串
+     * @param int|null $options 格式选项
+     * @param int|null $depth 最大嵌套深度
+     * @return string
+     */
+    public function toJson(int $options = null, int $depth = null): string
     {
         return json_encode(
             $this->val,
@@ -487,6 +785,11 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         return count($this->val);
     }
 
+    public function jsonSerialize(): array
+    {
+        return $this->val;
+    }
+
     public function __toString(): string
     {
         return $this->join(static::config('joinGlue'));
@@ -512,11 +815,20 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         unset($this->val[$key]);
     }
 
+    /**
+     * 返回一个新实例
+     * @param array $array 实例包含的数组
+     * @return Ary 新实例
+     */
     public static function new(array $array = []): self
     {
         return new static($array);
     }
 
+    /**
+     * 设置类方法的默认值
+     * @param array $config
+     */
     public static function setConfig(array $config): void
     {
         foreach ($config as $key => $val) {
@@ -524,6 +836,13 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         }
     }
 
+    /**
+     * 从 json 字符串创建一个新实例
+     * @param string $json json
+     * @param int|null $depth 最大嵌套深度
+     * @param int|null $options 格式选项
+     * @return Ary 新实例
+     */
     public static function fromJson(string $json, int $depth = null, int $options = null): self
     {
         return static::new(
@@ -536,6 +855,13 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         );
     }
 
+    /**
+     * 创建一个新的实例数组，用第一个实例数组的值作为其键名，第二个实例数组的值作为其值
+     * @link http://php.net/manual/zh/function.array-combine.php
+     * @param Ary $key 作为键的实例数组
+     * @param Ary $val 作为值的实例数组
+     * @return Ary 新实例
+     */
     public static function combine(self $key, self $val): self
     {
         return static::new(
@@ -543,16 +869,35 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable
         );
     }
 
+    /**
+     * 创建指定长度的实例数组并填充一个值
+     * @param int $startIndex 实例数组第一个索引值
+     * @param int $num 实例数组长度
+     * @param mixed $val 填充值
+     * @return Ary 新实例
+     */
     public static function fill(int $startIndex, int $num, $val): self
     {
         return static::new(array_fill($startIndex, $num, $val));
     }
 
-    public static function fillKeys(array $keys, $val): self
+    /**
+     * 使用 $val 参数的值作为值，使用 $keys 实例数组的值作为键来创建并填充一个新实例
+     * @param Ary $keys 作为键的实例数组
+     * @param mixed $val 填充值
+     * @return Ary 新实例
+     */
+    public static function fillKeys(self $keys, $val): self
     {
-        return static::new(array_fill_keys($keys, $val));
+        return static::new(array_fill_keys($keys->val(), $val));
     }
 
+    /**
+     * 若 $val 非 null 则返回 $val，否则返回 $config 中 $key 对应的值
+     * @param string $key
+     * @param null $val
+     * @return mixed|null
+     */
     protected static function config(string $key, $val = null)
     {
         if (is_null($val)) {

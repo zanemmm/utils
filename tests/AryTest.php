@@ -1,10 +1,8 @@
 <?php
-
 namespace Zane\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Zane\Utils\Ary;
-use TypeError;
 
 class AryTest extends TestCase
 {
