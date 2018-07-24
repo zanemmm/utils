@@ -9,10 +9,12 @@ class AryTest extends TestCase
     public function testNew()
     {
         $empty = Ary::new([]);
+
         $this->assertEmpty($empty->val());
 
         $array = [1, 2, 3];
         $ary = Ary::new($array);
+
         $this->assertEquals($array, $ary->val());
     }
 
@@ -20,17 +22,20 @@ class AryTest extends TestCase
     {
         $arrayA = [1, 2, 3, '4'];
         $ary = Ary::new($arrayA);
+
         $this->assertEquals($arrayA, $ary->val());
 
         $arrayB = [1, 2, 3, 4];
         $ary->val($arrayB);
+
         $this->assertEquals($arrayB, $ary->val());
     }
 
     public function testValues()
     {
-        $array = ['a', 'b', 'c', 'd'];
+        $array = ['x' => 'a', 'y' => 'b', 'z' => 'c', 'd', 'e'];
         $ary = Ary::new($array);
+
         $this->assertEquals(array_values($array), $ary->values()->val());
     }
 
@@ -40,10 +45,8 @@ class AryTest extends TestCase
         $ary = Ary::new($array);
 
         $this->assertEquals(array_keys($array), $ary->keys()->val());
-
         // 筛选数组值
         $this->assertEquals(array_keys($array, 1, true), $ary->keys(1, true)->val());
-
         $this->assertEquals(array_keys($array, null), $ary->keys(null, false)->val());
     }
 
@@ -73,17 +76,41 @@ class AryTest extends TestCase
         $this->assertEquals($array['b'], $ary->end());
     }
 
+    public function testFirstKey()
+    {
+        $array = [1, 2, 3];
+        $ary = Ary::new($array);
+
+        $this->assertEquals(0, $ary->firstKey());
+
+        $array = ['a' => 1, 2, 3];
+        $ary = Ary::new($array);
+
+        $this->assertEquals('a', $ary->firstKey());
+    }
+
+    public function testEndKey()
+    {
+        $array = [1, 2, 3];
+        $ary = Ary::new($array);
+
+        $this->assertEquals(2, $ary->endKey());
+
+        $array = [1, 2, 'b' => 3];
+        $ary = Ary::new($array);
+
+        $this->assertEquals('b', $ary->endKey());
+    }
+
     public function testLimit()
     {
         $array = ["a" => 1, "b" => 3, 99 => 4, 5, 6];
         $ary = Ary::new($array);
 
         $this->assertEquals(["a" => 1, "b" => 3, 4], $ary->limit(3)->val());
-
         $this->assertEquals($array, $ary->limit(100, true)->val());
-
+        $this->assertEquals(["a" => 1, "b" => 3, 4, 5, 6], $ary->limit(100, false)->val());
         $this->assertEmpty($ary->limit(0)->val());
-
         $this->assertEmpty($ary->limit(-1)->val());
     }
 
@@ -96,6 +123,47 @@ class AryTest extends TestCase
         $this->assertEquals(array_slice($array, -1, 3), $ary->slice(-1, 3)->val());
         $this->assertEquals(array_slice($array, -1, 100), $ary->slice(-1, 100)->val());
         $this->assertEquals(array_slice($array, -1, 0), $ary->slice(-1, 0)->val());
+    }
+
+    public function testChunk()
+    {
+        $array = [1, 2, 3, 4, 5, 6];
+        $ary = Ary::new($array);
+
+        $ary = $ary->chunk(1, false);
+        $chunks = array_chunk($array, 1, false);
+        foreach ($chunks as $key => $chunk) {
+            $this->assertEquals($chunk, $ary[$key]->val());
+        }
+    }
+
+    public function testColumn()
+    {
+        $array = [
+            ['id' => 1, 'name' => 'a', 'val' => 'x'],
+            ['id' => 2, 'name' => 'a', 'val' => 'y'],
+            ['id' => 3, 'name' => 'a', 'val' => 'z']
+        ];
+        $ary = Ary::new($array);
+
+        $col = array_column($array, 'name', 'id');
+        $val = $ary->column('name', 'id')->val();
+        $this->assertEquals($col, $val);
+
+        $AryArray = [
+            Ary::new(['id' => 1, 'name' => 'a', 'val' => 'x']),
+            Ary::new(['id' => 2, 'name' => 'b', 'val' => 'y']),
+            Ary::new(['id' => 3, 'name' => 'c', 'val' => 'z'])
+        ];
+        $ary = Ary::new($AryArray);
+
+        $col = array_column($AryArray, 'val');
+        $val = $ary->column('val')->val();
+        $this->assertEquals($col, $val);
+
+        $col = array_column($AryArray, 'val', 'name');
+        $val = $ary->column('val', 'name')->val();
+        $this->assertEquals($col, $val);
     }
 
     public function testReverse()
