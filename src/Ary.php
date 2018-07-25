@@ -13,6 +13,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
         'keysSearchValue'      => null,
         'keysStrict'           => true,
         'limitPreserveKeys'    => false,
+        'tailPreserveKeys'     => false,
         'slicePreserveKeys'    => false,
         'chunkPreserveKeys'    => false,
         'existStrict'          => true,
@@ -23,11 +24,13 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
         'natSortCaseSensitive' => true,
         'keySortAsc'           => true,
         'keySortFlag'          => SORT_REGULAR,
-        'uniqueFlag'           => SORT_REGULAR,
+        'uniqueFlag'           => SORT_STRING,
         'popGetElement'        => true,
         'shiftGetElement'      => true,
         'appendPreserveValues' => false,
         'searchStrict'         => true,
+        'beforePreserveKeys'   => true,
+        'afterPreserveKeys'    => true,
         'beforeContain'        => false,
         'afterContain'         => true,
         'joinGlue'             => '',
@@ -139,8 +142,8 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     /**
      * 获取实例数组中前 $len 个元素组成的新 Ary 实例
      * @see \Zane\Utils\Ary::slice()
-     * @param int $len 获取元素的个数，小于等于 0 或大于实例数组的长度，则返回空数组的实例
-     * @param bool|null $preserveKeys 为 true 则数字索引保持不变，false 则会重置数组的数字索引
+     * @param int $len 获取元素的个数，小于等于 0 则返回空数组的实例，大于等于实例数组的长度则返回原数组(索引可能会改变具体看 $preserveKeys 参数)的新实例
+     * @param bool|null $preserveKeys 为 true 则数字索引保持不变，false 则会重置数组的数字索引，字符串键名始终保持不变
      * @return Ary 新实例
      */
     public function limit(int $len, bool $preserveKeys = null): self
@@ -155,14 +158,32 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
+     * 获取实例数组中后 $len 个元素组成的新 Ary 实例
+     * @see \Zane\Utils\Ary::slice()
+     * @param int $len 获取元素的个数，小于等于 0 则返回空数组的实例，大于等于实例数组的长度则返回原数组(索引可能会改变具体看 $preserveKeys 参数)的新实例
+     * @param bool|null $preserveKeys 为 true 则数字索引保持不变，false 则会重置数组的数字索引，字符串键名始终保持不变
+     * @return Ary 新实例
+     */
+    public function tail(int $len, bool $preserveKeys = null): self
+    {
+        if ($len <= 0) {
+            return static::new([]);
+        }
+
+        $val = array_slice($this->val, -$len, null, static::config('tailPreserveKeys', $preserveKeys));
+
+        return static::new($val);
+    }
+
+    /**
      * 从实例数组中取出一段并返回新的实例
      * @see http://php.net/manual/zh/function.array-slice.php
      * @param int $offset 起始偏移量
      * @param int $len 长度
-     * @param bool|null $preserveKeys 为 true 则数字索引保持不变，false 则会重置数组的数字索引
+     * @param bool|null $preserveKeys 为 true 则数字索引保持不变，false 则会重置数组的数字索引，字符串键名始终保持不变
      * @return Ary 新实例
      */
-    public function slice(int $offset, int $len, bool $preserveKeys = null): self
+    public function slice(int $offset, int $len = null, bool $preserveKeys = null): self
     {
         $val = array_slice($this->val, $offset, $len, static::config('slicePreserveKeys', $preserveKeys));
 
@@ -253,7 +274,9 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      */
     public function keyExist($key): bool
     {
-        return array_key_exists($key, $this->val);
+        // isset 性能比 array_key_exists 高，但 isset 在数组成员的值为 null 时会返回 false
+        // 所以利用 || 运算符的短路特性，仅当 isset 为 false 时使用 array_key_exists 判断是否存在该键
+        return (isset($this->val[$key]) || array_key_exists($key, $this->val));
     }
 
     /**
@@ -264,7 +287,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      */
     public function isSet($key): bool
     {
-        return isset($key, $this->val);
+        return isset($this->val[$key]);
     }
 
     /**
@@ -274,15 +297,15 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      * @see http://php.net/manual/zh/function.asort.php
      * @see http://php.net/manual/zh/function.arsort.php
      * @param bool|null $asc true为升序，false为降序
-     * @param bool|null $preserveKeys 为 true 则数字索引保持不变，false 则会重置数组的数字索引
+     * @param bool|null $preserveKeys true 则保持索引关联，false 则以数字索引重置
      * @param int|null $flag 排序类型标记，参见 PHP 手册 sort 函数
      * @return Ary 原实例
      */
     public function sort(bool $asc = null, bool $preserveKeys = null, int $flag = null): self
     {
-        // 通过将 $asc 左移一位并加上 $preserveKeys 得出范围在 0b00 到 0b11 的 $status
+        // 通过将 $asc 左移一位并或上 $preserveKeys 得出范围在 0b00 到 0b11 的 $status
         // 通过 $status 的值选择不同的排序函数
-        $status = static::config('sortAsc', $asc) << 1 + static::config('sortPreserveKeys', $preserveKeys);
+        $status = static::config('sortAsc', $asc) << 1 | static::config('sortPreserveKeys', $preserveKeys);
         $flag   = static::config('sortFlag', $flag);
 
         switch ($status) {
@@ -391,10 +414,10 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     /**
      * 移除实例数组中重复的值
      * @see http://php.net/manual/zh/function.array-unique.php
-     * @param int $flag 排序类型标记
+     * @param int|null $flag 排序类型标记
      * @return Ary 新实例
      */
-    public function unique(int $flag): self
+    public function unique(int $flag = null): self
     {
         $val = array_unique($this->val, static::config('uniqueFlag', $flag));
 
@@ -427,7 +450,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 弹出一个实例数组末尾的元素（出栈）
+     * 从实例数组中的末尾弹出一个元素（出栈）
      * @see http://php.net/manual/zh/function.array-pop.php
      * @param bool|null $getElement true 则返回元素值，false 则返回原实例
      * @return $this|mixed 原实例或元素值
@@ -443,7 +466,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 在实例数组开头插入元素
+     * 向实例数组的开头插入元素
      * @see http://php.net/manual/zh/function.array-unshift.php
      * @param array ...$elements 插入的元素可为任意多个
      * @return Ary 原实例
@@ -456,7 +479,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 弹出一个实例数组开头的元素
+     * 从实例数组中的开头弹出一个元素
      * @see http://php.net/manual/zh/function.array-shift.php
      * @param bool|null $getElement true 则返回元素值，false 则返回原实例
      * @return $this|mixed 原实例或元素值
@@ -506,36 +529,47 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      * 获取第一个指定值之前的元素所组成的实例数组
      * @param mixed $needle 指定值
      * @param bool|null $contain 结果是否包含指定值
+     * @param bool|null $preserveKeys 为 true 则数字索引保持不变，false 则会重置数组的数字索引，字符串键名始终保持不变
      * @return Ary 新实例
      */
-    public function before($needle, bool $contain = null): self
+    public function before($needle, bool $contain = null, bool $preserveKeys = null): self
     {
-        // keys 将原数组的键作为值重新索引为新的数组
-        // 内层的 search 返回搜索内容对应原数组的键
-        // 通过外层的 search 可以获取原数组的键所对应的新数组的键，此时的键即为 slice 所需的长度
-        $len = $this->keys()->search($this->search($needle));
+        $key = $this->search($needle, true);
+        // 如果数组中无此值，直接返回空实例数组
+        if ($key === false) {
+            return static::new([]);
+        }
+        // keys 将原数组的键名作为值，重新索引为新的数组
+        // 通过 search 可以获取原数组的键名所对应的数字索引，此时的数字索引即为 slice 所需的长度
+        $len = $this->keys()->search($key, true);
         if (static::config('beforeContain', $contain)) {
             $len++;
         }
 
-        return $this->slice(0, $len, true);
+        return $this->slice(0, $len, static::config('beforePreserveKeys', $preserveKeys));
     }
 
     /**
      * 获取第一个指定值之后的元素所组成的实例数组
      * @param mixed $needle 指定值
      * @param bool|null $contain 结果是否包含指定值
+     * @param bool|null $preserveKeys 为 true 则数字索引保持不变，false 则会重置数组的数字索引，字符串键名始终保持不变
      * @return Ary 新实例
      */
-    public function after($needle, bool $contain = null)
+    public function after($needle, bool $contain = null, bool $preserveKeys = null): self
     {
+        $key = $this->search($needle, true);
+        // 如果数组中无此值，直接返回空实例数组
+        if ($key === false) {
+            return static::new([]);
+        }
         // 原理与 before 相同
-        $offset = $this->keys()->search($this->search($needle));
+        $offset = $this->keys()->search($key, true);
         if (!static::config('afterContain', $contain)) {
             $offset++;
         }
 
-        return $this->slice($offset, null, true);
+        return $this->slice($offset, null, static::config('afterPreserveKeys', $preserveKeys));
     }
 
     /**
