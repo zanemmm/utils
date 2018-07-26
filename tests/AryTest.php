@@ -1,6 +1,7 @@
 <?php
 namespace Zane\Tests;
 
+use function MongoDB\BSON\toJSON;
 use PHPUnit\Framework\TestCase;
 use Zane\Utils\Ary;
 
@@ -31,6 +32,35 @@ class AryTest extends TestCase
         $this->assertEquals($arrayB, $ary->val());
     }
 
+    /**
+     * @depends testVal
+     */
+    public function testToArray()
+    {
+        $a = [
+            ['start' => 1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 'end' => 9]
+        ];
+        $b = [
+            Ary::new(['start' => 1, 2, 3]),
+            Ary::new([4, 5, 6]),
+            Ary::new([7, 8, 'end' => 9])
+        ];
+        $ary = Ary::new($b);
+
+        $this->assertEquals($a, $ary->toArray(false));
+        $this->assertEquals($a, $ary->val($a)->toArray(false));
+
+        // 测试递归
+        $c = ['start' => 100, 99, 98, $a];
+        $d = ['start' => 100, 99, 98, $ary];
+        $ary = Ary::new($d);
+
+        $this->assertEquals($c, $ary->toArray(true));
+    }
+
+
     public function testValues()
     {
         $array = ['x' => 'a', 'y' => 'b', 'z' => 'c', 'd', 'e'];
@@ -47,7 +77,8 @@ class AryTest extends TestCase
         $this->assertEquals(array_keys($array), $ary->keys()->val());
         // 筛选数组值
         $this->assertEquals(array_keys($array, 1, true), $ary->keys(1, true)->val());
-        $this->assertEquals(array_keys($array, null), $ary->keys(null, false)->val());
+        $this->assertEquals(array_keys($array, null, false), $ary->keys(null, false)->val());
+        $this->assertEquals(array_keys($array, null, true), $ary->keys(null, true)->val());
     }
 
     public function testFirst()
@@ -175,6 +206,10 @@ class AryTest extends TestCase
 
         $col = array_column($AryArray, 'val', 'name');
         $val = $ary->column('val', 'name')->val();
+        $this->assertEquals($col, $val);
+
+        $col = array_column($AryArray, 'name', 'val');
+        $val = $ary->column('name', 'val')->val();
         $this->assertEquals($col, $val);
     }
 
@@ -327,7 +362,7 @@ class AryTest extends TestCase
         $array = ['a' => 0, 'b' => 0, 'c' => '1', 'd' => 1, 0, 1, 2, 'e' => null, 'f' => []];
         $ary = Ary::new($array);
 
-        $this->assertEquals(array_reverse($array), $ary->reverse()->val());
+        $this->assertEquals(array_reverse($array), $ary->reverse()->toArray());
     }
 
     public function testPush()
@@ -349,7 +384,7 @@ class AryTest extends TestCase
      */
     public function testPop($pushResult)
     {
-        [$array, $ary] = $pushResult;
+        list($array, $ary) = $pushResult;
 
         $a = array_pop($array);
         $b = $ary->pop();
@@ -376,12 +411,14 @@ class AryTest extends TestCase
      */
     public function testShift($unShiftResult)
     {
-        [$array, $ary] = $unShiftResult;
+        list($array, $ary) = $unShiftResult;
 
         $a = array_shift($array);
         $b = $ary->shift();
         $this->assertEquals($a, $b);
         $this->assertEquals($array, $ary->val());
+        array_shift($array);
+        $this->assertEquals($array, $ary->shift(false)->val());
     }
 
     public function testAppend()
@@ -485,7 +522,7 @@ class AryTest extends TestCase
 
     public function testClean()
     {
-        $a = [0 => 'foo', 1 => false, 2 => -1, 3 => null, 4 => ''];
+        $a = [0 => 'foo', 1 => false, 2 => -1, 3 => null, 4 => '', 5 => []];
         $ary = Ary::new($a);
 
         $this->assertEquals(['foo', 2 => -1], $ary->clean()->val());
@@ -503,6 +540,224 @@ class AryTest extends TestCase
         $this->assertEquals('I am utils hello world !', $aryB->join(' '));
     }
 
+    /**
+     * @depends testToArray
+     */
+    public function testEach()
+    {
+        $str1 = '';
+        $str2 = '';
+        $fn = function ($val, $key, $isAry) use (&$str1, &$str2) {
+            if ($isAry) {
+                $str2 .= $key . '=>' . $val . PHP_EOL;
+            } else {
+                $str1 .= $key . '=>' . $val . PHP_EOL;
+            }
+        };
+        $array = ['hello' => 'world', 'pi' => '0php.net', 1, 2, 3];
+        $ary = Ary::new($array);
+        array_walk($array, $fn, false);
+        $ary->each($fn, true, false);
+        $this->assertEquals($str1, $str2);
+
+        // 测试递归
+        $array2 = ['my' => 'second', 'array' => $array];
+        $ary2 = Ary::new($array2);
+        array_walk_recursive($array2, $fn, false);
+        $ary2->each($fn, true, true);
+        $this->assertEquals($str1, $str2);
+    }
+
+    public function testMap()
+    {
+        $fn = function ($n) {
+            return $n * $n;
+        };
+        $array = [1, 2, 3, 4, 5];
+        $ary = Ary::new($array);
+
+        $this->assertEquals(array_map($fn, $array), $ary->map($fn)->val());
+    }
+
+    public function testFilter()
+    {
+        $fn = function ($n, $k) {
+            return $n % 2 || $k == 5;
+        };
+        $array = [1, 2, 3, 4, 5, 6];
+        $ary = Ary::new($array);
+
+        $this->assertEquals(
+            array_filter($array, $fn, ARRAY_FILTER_USE_BOTH),
+            $ary->filter($fn, ARRAY_FILTER_USE_BOTH)->val()
+        );
+    }
+
+    public function testReduce()
+    {
+        $fn = function ($carry, $item) {
+            $carry += $item;
+            return $carry;
+        };
+        $array = [1, 2, 3, 4, 5, 6];
+        $ary = Ary::new($array);
+
+        $this->assertEquals(array_reduce($array, $fn), $ary->reduce($fn));
+        $this->assertEquals(array_reduce($array, $fn, 1), $ary->reduce($fn, 1));
+    }
+
+    public function testPad()
+    {
+        $array = [1, 2, 3];
+        $ary = Ary::new($array);
+
+        $this->assertEquals(array_pad($array, 5, 1), $ary->pad(5, 1)->val());
+        $this->assertEquals(array_pad($array, 1, 1), $ary->pad(1, 1)->val());
+    }
+
+    public function testFill()
+    {
+        $array = ['hello' => 'world', 'hi' => 'world'];
+        $ary = Ary::new($array);
+
+        $ary = $ary->fill(1);
+        $this->assertEquals(1, $ary->val()['hello']);
+        $this->assertEquals(1, $ary->val()['hi']);
+    }
+
+    public function testEmpty()
+    {
+        $ary = Ary::new([]);
+        $this->assertEquals(true, $ary->empty());
+
+        $ary->val([1]);
+        $this->assertEquals(false, $ary->empty());
+    }
+
+    public function product()
+    {
+        $array = [1, 2, 3, 4];
+        $ary = Ary::new($array);
+
+        $this->assertEquals(array_product($array), $ary->product());
+    }
+
+    /**
+     * @depends testPush
+     * @depends testPop
+     */
+    public function testAllTrue()
+    {
+        $ary = Ary::new([1, 2, 3, 4]);
+
+        $this->assertEquals(true, $ary->allTrue());
+        $this->assertEquals(true, $ary->push([])->allTrue());
+        $this->assertEquals(false, $ary->pop(false)->push('')->allTrue());
+        $this->assertEquals(false, $ary->pop(false)->push(null)->allTrue());
+        $this->assertEquals(false, $ary->pop(false)->push(false)->allTrue());
+    }
+
+    public function testSum()
+    {
+        $array = [1, 2, 3, 4, 5, 6];
+        $ary = Ary::new($array);
+
+        $this->assertEquals(array_sum($array), $ary->sum());
+    }
+
+    public function testRand()
+    {
+        $array = ['hello' => 1, 'world' => 2, 'x' => 3, 4, 5, 6];
+        $ary = Ary::new($array);
+
+        $this->assertEquals(true, in_array($ary->rand(1)->first(), $array));
+        $this->assertEquals(true, array_key_exists($ary->rand(1)->firstKey(), $array));
+        $this->assertEquals(true, in_array($ary->rand(3)->first(), $array));
+        $this->assertEquals(true, array_key_exists($ary->rand(3)->firstKey(), $array));
+    }
+
+    public function testRandVal()
+    {
+        $array = ['hello' => 1, 'world' => 2, 'x' => 3, 4, 5, 6];
+        $ary = Ary::new($array);
+
+        $this->assertEquals(true, in_array($ary->randVal(), $array));
+    }
+
+    public function testRandKey()
+    {
+        $array = ['hello' => 1, 'world' => 2, 'x' => 3, 4, 5, 6];
+        $ary = Ary::new($array);
+
+        $this->assertEquals(true, array_key_exists($ary->randKey(), $array));
+    }
+
+    public function testToJson()
+    {
+        $ary = Ary::new([
+            'name'  => 'zane',
+            'email' => 'pi@0php.net'
+        ]);
+        $json = <<<EOT
+{
+    "name": "zane",
+    "email": "pi@0php.net"
+}
+EOT;
+
+        $this->assertEquals($json, $ary->toJson());
+
+        // 测试递归
+        $ary2 = Ary::new([
+            'id' => 1,
+            'profile' => $ary
+        ]);
+        $json2 = <<<EOT
+{
+    "id": 1,
+    "profile": {
+        "name": "zane",
+        "email": "pi@0php.net"
+    }
+}
+EOT;
+
+        $this->assertEquals($json2, $ary2->toJson());
+
+        return [$ary, $json, $ary2, $json2];
+    }
+
+    /**
+     * @param array $array
+     * @depends testToJson
+     */
+    public function testFromJson($array)
+    {
+        list($ary, $json, $ary2, $json2) = $array;
+        $this->assertEquals($ary->val(), Ary::fromJson($json)->val());
+        $this->assertEquals($ary2->toArray(), Ary::fromJson($json2)->val());
+    }
+
+    public function testCombine()
+    {
+        $array = ['hello' => 'world', 'hi' => 'ary'];
+        $key = Ary::new(['hello', 'hi']);
+        $val = Ary::new(['world', 'ary']);
+
+        self::assertEquals($array, Ary::combine($key, $val)->val());
+    }
+
+    public function testNewFill()
+    {
+        $a = [1, 1, 1];
+        $b = Ary::newFill(0, 3, 1)->val();
+        $this->assertEquals($a, $b);
+
+        $c = [99 => 1, 1, 1];
+        $d = Ary::newFill(99, 3, 1)->val();
+        $this->assertEquals($c, $d);
+    }
+    
     public function testIteratorAggregate()
     {
         $a = ['a' => 0, 'b' => 1, 'c' => 2, 3, 4, 5];
@@ -512,5 +767,44 @@ class AryTest extends TestCase
         foreach ($ary as $key => $val) {
             $this->assertEquals($a[$key], $val);
         }
+    }
+
+    public function testArrayAccess()
+    {
+        $array = ['hello' => 'world', 'my' => 'name', 'is' => '?', 1];
+        $ary = Ary::new($array);
+
+        $this->assertEquals('world', $ary['hello']);
+        $this->assertEquals(1, $ary[0]);
+        $this->assertEquals(null, $ary['?']);
+        $this->assertEquals(false, isset($ary['?']));
+        unset($ary['my']);
+        $this->assertEquals(false, isset($ary['my']));
+        $ary['hello'] = 'other';
+        $this->assertEquals('other', $ary['hello']);
+        $ary[] = 'dot';
+        $this->assertEquals('dot', $ary->end());
+    }
+
+    public function testCountable()
+    {
+        $ary = Ary::new(range(1, 10));
+        $this->assertEquals(10, count($ary));
+
+        $ary->val([]);
+        $this->assertEquals(0, count($ary));
+    }
+
+    public function testObjectAccess()
+    {
+        $ary = Ary::new(['val' => 1, 'test' => 2]);
+        $this->assertEquals(1, $ary->val);
+        $this->assertEquals(2, $ary->test);
+        $this->assertEquals(true, isset($ary->test));
+        $this->assertEquals(false, isset($ary->other));
+        unset($ary->test);
+        $this->assertEquals(false, isset($ary->test));
+        $ary->val = 2;
+        $this->assertEquals(2, $ary->val);
     }
 }

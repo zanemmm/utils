@@ -9,8 +9,7 @@ use JsonSerializable;
 
 class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
 {
-    protected static $config = [
-        'keysSearchValue'      => null,
+    protected static $default = [
         'keysStrict'           => true,
         'limitPreserveKeys'    => false,
         'tailPreserveKeys'     => false,
@@ -79,11 +78,11 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     /**
      * 获取实例数组中的键名
      * @see http://php.net/manual/zh/function.array-keys.php
-     * @param null $searchValue 空则返回全部键，非空则返回对应 $searchValue 值的键
-     * @param null $strict 为真时数组中的值与 $searchValue 采用严格比较
+     * @param mixed|null $searchValue 空则返回全部键，非空则返回对应 $searchValue 值的键
+     * @param bool|null $strict 为真时数组中的值与 $searchValue 采用严格比较
      * @return Ary 新实例
      */
-    public function keys($searchValue = null, $strict = null): self
+    public function keys($searchValue = null, bool $strict = null): self
     {
         // 实参个数为零时直接调用 array_keys 函数
         // 若此时调用 array_keys 函数时带入 $searchValue 和 $strict 参数会导致 array_keys 返回 数组值为 null 的键名, 与预期结果不符
@@ -95,8 +94,8 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
         return static::new(
             array_keys(
                 $this->val,
-                static::config('keysSearchValue', $searchValue),
-                static::config('keysStrict', $strict)
+                $searchValue,
+                static::default($strict, 'keysStrict')
             )
         );
     }
@@ -152,7 +151,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
             return static::new([]);
         }
 
-        $val = array_slice($this->val, 0, $len, static::config('limitPreserveKeys', $preserveKeys));
+        $val = array_slice($this->val, 0, $len, static::default($preserveKeys, 'limitPreserveKeys'));
 
         return static::new($val);
     }
@@ -170,7 +169,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
             return static::new([]);
         }
 
-        $val = array_slice($this->val, -$len, null, static::config('tailPreserveKeys', $preserveKeys));
+        $val = array_slice($this->val, -$len, null, static::default($preserveKeys, 'tailPreserveKeys'));
 
         return static::new($val);
     }
@@ -185,7 +184,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      */
     public function slice(int $offset, int $len = null, bool $preserveKeys = null): self
     {
-        $val = array_slice($this->val, $offset, $len, static::config('slicePreserveKeys', $preserveKeys));
+        $val = array_slice($this->val, $offset, $len, static::default($preserveKeys, 'slicePreserveKeys'));
 
         return static::new($val);
     }
@@ -199,7 +198,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      */
     public function chunk(int $size, bool $preserveKeys = null): self
     {
-        $chunks = array_chunk($this->val, $size, static::config('chunkPreserveKeys', $preserveKeys));
+        $chunks = array_chunk($this->val, $size, static::default($preserveKeys, 'chunkPreserveKeys'));
 
         $val = [];
         foreach ($chunks as $chunk) {
@@ -218,10 +217,10 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      */
     public function column($columnKey, $indexKey = null): self
     {
-        // 当列键名为 val 会与数组属性 val 冲突，因为在 PHP 中同一个类的对象即使不是同一个实例也可以互相访问对方的私有与受保护成员
+        // 当键名为 val 会与数组属性 val 冲突，因为在 PHP 中同一个类的对象即使不是同一个实例也可以互相访问对方的私有与受保护成员
         // 所以并不会触发 __get() 方法，来获取数组中的值，而是直接将整个 val 属性返回
         // 为了解决这个问题采用匿名类的方式将 array_column 函数从 Ary 类调用改变到在匿名类中调用
-        if ($columnKey === 'val') {
+        if ($columnKey === 'val' || $indexKey === 'val') {
             $object = new class() {
                 public function do($array, $columnKey, $indexKey = null)
                 {
@@ -263,7 +262,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      */
     public function exist($needle, bool $strict = null): bool
     {
-        return in_array($needle, $this->val, static::config('existStrict', $strict));
+        return in_array($needle, $this->val, static::default($strict, 'existStrict'));
     }
 
     /**
@@ -305,8 +304,8 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     {
         // 通过将 $asc 左移一位并或上 $preserveKeys 得出范围在 0b00 到 0b11 的 $status
         // 通过 $status 的值选择不同的排序函数
-        $status = static::config('sortAsc', $asc) << 1 | static::config('sortPreserveKeys', $preserveKeys);
-        $flag   = static::config('sortFlag', $flag);
+        $status = static::default($asc, 'sortAsc') << 1 | static::default($preserveKeys, 'sortPreserveKeys');
+        $flag   = static::default($flag, 'sortFlag');
 
         switch ($status) {
             // $asc = false, $preserveKeys = false
@@ -340,7 +339,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      */
     public function userSort(callable $fn, bool $preserveKeys = null): self
     {
-        if (static::config('userSortPreserveKeys', $preserveKeys)) {
+        if (static::default($preserveKeys, 'userSortPreserveKeys')) {
             uasort($this->val, $fn);
         } else {
             usort($this->val, $fn);
@@ -358,7 +357,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      */
     public function natSort(bool $caseSensitive = null): self
     {
-        if (static::config('natSortCaseSensitive', $caseSensitive)) {
+        if (static::default($caseSensitive, 'natSortCaseSensitive')) {
             natsort($this->val);
         } else {
             natcasesort($this->val);
@@ -376,10 +375,10 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      */
     public function keySort(bool $asc = null, int $flag = null): self
     {
-        if (static::config('keySortAsc', $asc)) {
-            ksort($this->val, static::config('keySortFlag', $flag));
+        if (static::default($asc, 'keySortAsc')) {
+            ksort($this->val, static::default($flag, 'keySortFlag'));
         } else {
-            krsort($this->val, static::config('keySortFlag', $flag));
+            krsort($this->val, static::default($flag, 'keySortFlag'));
         }
 
         return $this;
@@ -419,7 +418,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      */
     public function unique(int $flag = null): self
     {
-        $val = array_unique($this->val, static::config('uniqueFlag', $flag));
+        $val = array_unique($this->val, static::default($flag, 'uniqueFlag'));
 
         return static::new($val);
     }
@@ -458,7 +457,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     public function pop(bool $getElement = null)
     {
         $element = array_pop($this->val);
-        if (static::config('popGetElement', $getElement)) {
+        if (static::default($getElement, 'popGetElement')) {
             return $element;
         }
 
@@ -487,7 +486,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     public function shift(bool $getElement = null)
     {
         $element = array_shift($this->val);
-        if (static::config('shiftGetElement', $getElement)) {
+        if (static::default($getElement, 'shiftGetElement')) {
             return $element;
         }
 
@@ -503,7 +502,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      */
     public function append(self $array, bool $preserveValues = null): self
     {
-        $preserveValues = static::config('appendPreserveValues', $preserveValues);
+        $preserveValues = static::default($preserveValues, 'appendPreserveValues');
         if ($preserveValues) {
             $val = $this->val + $array->val();
         } else {
@@ -522,7 +521,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      */
     public function search($needle, bool $strict = null)
     {
-        return array_search($needle, $this->val, static::config('searchStrict', $strict));
+        return array_search($needle, $this->val, static::default($strict, 'searchStrict'));
     }
 
     /**
@@ -542,11 +541,11 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
         // keys 将原数组的键名作为值，重新索引为新的数组
         // 通过 search 可以获取原数组的键名所对应的数字索引，此时的数字索引即为 slice 所需的长度
         $len = $this->keys()->search($key, true);
-        if (static::config('beforeContain', $contain)) {
+        if (static::default($contain, 'beforeContain')) {
             $len++;
         }
 
-        return $this->slice(0, $len, static::config('beforePreserveKeys', $preserveKeys));
+        return $this->slice(0, $len, static::default($preserveKeys, 'beforePreserveKeys'));
     }
 
     /**
@@ -565,11 +564,11 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
         }
         // 原理与 before 相同
         $offset = $this->keys()->search($key, true);
-        if (!static::config('afterContain', $contain)) {
+        if (!static::default($contain, 'afterContain')) {
             $offset++;
         }
 
-        return $this->slice($offset, null, static::config('afterPreserveKeys', $preserveKeys));
+        return $this->slice($offset, null, static::default($preserveKeys, 'afterPreserveKeys'));
     }
 
     /**
@@ -607,12 +606,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      */
     public function join(string $glue = null): string
     {
-        // 当 val 数组中存在 Ary 实例时，其魔术方法 __toString 会同样调用 join 方法，并以 $config 中 joinGlue 的值为 $glue
-        // 所以调用 join 方法时需要将 $config 中 joinGlue 的值设置为当前实参 $glue， 并在调用结束后恢复原值
-        $oldGlue = static::config('joinGlue');
-        static::setConfig(['joinGlue' => $glue]);
+        // 当 val 数组中存在 Ary 实例时，其魔术方法 __toString 会同样调用 join 方法，并以 $default 中 joinGlue 的值为 $glue
+        // 所以调用 join 方法时需要将 $default 中 joinGlue 的值设置为当前实参 $glue， 并在调用结束后恢复原值
+        $oldGlue = static::default('joinGlue');
+        static::setDefault(['joinGlue' => $glue]);
         $str = implode($glue, $this->val);
-        static::setConfig(['joinGlue' => $oldGlue]);
+        static::setDefault(['joinGlue' => $oldGlue]);
 
         return $str;
     }
@@ -627,8 +626,9 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      */
     public function each(callable $fn, $userData = null, bool $recursive = null): self
     {
-        if (static::config('eachRecursive', $recursive)) {
-            array_walk_recursive($this->toArray(true), $fn, $userData);
+        if (static::default($recursive, 'eachRecursive')) {
+            $array = $this->toArray(true);
+            array_walk_recursive($array, $fn, $userData);
         } else {
             array_walk($this->val, $fn, $userData);
         }
@@ -658,7 +658,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      */
     public function filter(callable $fn, int $flag = null): self
     {
-        $val = array_filter($this->val, $fn, static::config('filterFlag', $flag));
+        $val = array_filter($this->val, $fn, static::default($flag, 'filterFlag'));
 
         return static::new($val);
     }
@@ -667,7 +667,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      * 用回调函数迭代地将实例数组简化为单一的值
      * @see http://php.net/manual/zh/function.array-reduce.php
      * @param callable $fn 使用的回调函数
-     * @param null $initial 回调函数初始值
+     * @param mixed|null $initial 回调函数初始值
      * @return mixed
      */
     public function reduce(callable $fn, $initial = null)
@@ -690,6 +690,16 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
+     * 返回用 $val 填充当前所有键的新实例
+     * @param mixed $val 填充值
+     * @return Ary 新实例
+     */
+    public function fill($val): self
+    {
+        return static::new(array_fill_keys($this->keys()->val(), $val));
+    }
+
+    /**
      * 判断实例数组是否为空
      * @see http://php.net/manual/zh/function.empty.php
      * @return bool
@@ -702,15 +712,15 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     /**
      * 计算实例数组中所有值的乘积
      * @see http://php.net/manual/zh/function.array-product.php
-     * @return number
+     * @return float
      */
-    public function product(): number
+    public function product(): float
     {
         return array_product($this->val);
     }
 
     /**
-     * 确认实例数组中没有等值为 false 的值，包括： false null 0 '' []
+     * 确认实例数组中没有等值为 false 的值，包括： false null 0 ''
      * @return bool
      */
     public function allTrue(): bool
@@ -721,15 +731,15 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     /**
      * 对实例数组中所有值求和
      * @see http://php.net/manual/zh/function.array-sum.php
-     * @return number
+     * @return float
      */
-    public function sum(): number
+    public function sum(): float
     {
         return array_sum($this->val);
     }
 
     /**
-     * 从实例数组中随机取出一个或多个元素组成新的实例
+     * 从实例数组中随机取出一个或多个元素组成新的实例，保持索引关联
      * @see http://php.net/manual/zh/function.array-rand.php
      * @param int $num 取出数量
      * @return Ary
@@ -738,18 +748,29 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     {
         // todo 抛出异常
         if ($num === 1) {
-            $val = [array_rand($this->val, $num)];
+            $key = array_rand($this->val, $num);
+            $val = [$key => $this->val[$key]];
         } else {
-            $val = array_rand($this->val, $num);
+            $keys = array_rand($this->val, $num);
+            $val = array_intersect_key($this->val, array_flip($keys));
         }
         return static::new($val);
     }
 
     /**
-     * 从实例数组中随机取出一个元素
+     * 从实例数组中随机取出一个元素的值
      * @return mixed
      */
-    public function randElement()
+    public function randVal()
+    {
+        return $this->val[array_rand($this->val, 1)];
+    }
+
+    /**
+     * 从实例数组中随机取出一个元素的键名
+     * @return mixed
+     */
+    public function randKey()
     {
         return array_rand($this->val, 1);
     }
@@ -762,20 +783,20 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     public function toArray(bool $recursive = null): array
     {
         $array = [];
-        if (static::config('toArrayRecursive', $recursive)) {
-            foreach ($this->val as $item) {
+        if (static::default($recursive, 'toArrayRecursive')) {
+            foreach ($this->val as $key => $item) {
                 if ($item instanceof static) {
-                    $array[] = $item->toArray(true);
+                    $array[$key] = $item->toArray(true);
                 } else {
-                    $array[] = $item;
+                    $array[$key] = $item;
                 }
             }
         } else {
-            foreach ($this->val as $item) {
+            foreach ($this->val as $key => $item) {
                 if ($item instanceof static) {
-                    $array[] = $item->val();
+                    $array[$key] = $item->val();
                 } else {
-                    $array[] = $item;
+                    $array[$key] = $item;
                 }
             }
         }
@@ -793,8 +814,8 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     {
         return json_encode(
             $this->val,
-            static::config('toJsonOptions', $options),
-            static::config('toJsonDepth', $depth)
+            static::default($options, 'toJsonOptions'),
+            static::default($depth, 'toJsonDepth')
         );
     }
 
@@ -839,7 +860,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
 
     public function __toString(): string
     {
-        return $this->join(static::config('joinGlue'));
+        return $this->join(static::default('joinGlue'));
     }
 
     public function __isset($key) : bool
@@ -874,12 +895,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
 
     /**
      * 设置类方法的默认值
-     * @param array $config
+     * @param array $default
      */
-    public static function setConfig(array $config): void
+    public static function setDefault(array $default): void
     {
-        foreach ($config as $key => $val) {
-            static::$config[$key] = $val;
+        foreach ($default as $key => $val) {
+            static::$default[$key] = $val;
         }
     }
 
@@ -896,8 +917,8 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
             json_decode(
                 $json,
                 true,
-                static::config('fromJsonDepth', $depth),
-                static::config('fromJsonOptions', $options)
+                static::default($depth, 'fromJsonDepth'),
+                static::default($options, 'fromJsonOptions')
             )
         );
     }
@@ -923,34 +944,29 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      * @param mixed $val 填充值
      * @return Ary 新实例
      */
-    public static function fill(int $startIndex, int $num, $val): self
+    public static function newFill(int $startIndex, int $num, $val): self
     {
         return static::new(array_fill($startIndex, $num, $val));
     }
 
     /**
-     * 使用 $val 的值作为值，$keys 的值作为键名来创建并填充一个新实例
-     * @param Ary $keys 作为键的实例数组
-     * @param mixed $val 填充值
-     * @return Ary 新实例
-     */
-    public static function fillKeys(self $keys, $val): self
-    {
-        return static::new(array_fill_keys($keys->val(), $val));
-    }
-
-    /**
-     * 若 $val 非 null 则返回 $val，否则返回 $config 中 $key 对应的值
-     * @param string $key
-     * @param null $val
+     * 若传入两个参数则第一个参数为 null 时，则返回 $default 数组中以 $second 为键名的值
+     * 若第一个参数不为 null 则返回第一个参数的值
+     * 若只传入一个参数则直接返回 $default 数组中以 $first 为键名的值
+     * @param null $first
+     * @param string|null $second
      * @return mixed|null
      */
-    protected static function config(string $key, $val = null)
+    protected static function default($first, string $second = null)
     {
-        if (is_null($val)) {
-            return static::$config[$key] ?? null;
+        if (func_num_args() < 2) {
+            return static::$default[$first] ?? null;
         }
 
-        return $val;
+        if (is_null($first)) {
+            return static::$default[$second] ?? null;
+        }
+
+        return $first;
     }
 }
