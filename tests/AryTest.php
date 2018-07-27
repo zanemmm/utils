@@ -1,7 +1,6 @@
 <?php
 namespace Zane\Tests;
 
-use function MongoDB\BSON\toJSON;
 use PHPUnit\Framework\TestCase;
 use Zane\Utils\Ary;
 
@@ -30,6 +29,61 @@ class AryTest extends TestCase
         $ary->val($arrayB);
 
         $this->assertEquals($arrayB, $ary->val());
+    }
+
+    public function testAccessible()
+    {
+        $this->assertTrue(Ary::accessible([]));
+        $this->assertTrue(Ary::accessible(Ary::new([])));
+        $this->assertFalse(Ary::accessible(null));
+    }
+
+    /**
+     * @depends testVal
+     */
+    public function testGet()
+    {
+        $array = ['products.desk' => ['price' => 100]];
+        $this->assertEquals(['price' => 100], Ary::new($array)->get('products.desk'));
+
+        $array = ['products' =>['desk' => ['price' => 100]]];
+        $this->assertEquals(['price' => 100], Ary::new($array)->get('products.desk'));
+        $this->assertEquals(100, Ary::new($array)->get('products.desk.price'));
+
+        $array = ['foo' => null, 'bar' => ['baz' => null]];
+        $this->assertNull(Ary::new($array)->get('foo', 'default'));
+        $this->assertNull(Ary::new($array)->get('bar.baz', 'default'));
+
+        $ary = Ary::new(['products' => Ary::new(['desk' => Ary::new(['price' => 100])])]);
+        $this->assertEquals(['price' => 100], $ary->get('products.desk')->val());
+
+        $ary = Ary::new(['foo', 'bar']);
+        $this->assertEquals($ary->val(), $ary->get());
+        $this->assertEquals('default', $ary->get('?', 'default'));
+    }
+
+    /**
+     * @depends testGet
+     */
+    public function testSet()
+    {
+        $ary = Ary::new([]);
+        $ary->set('hello', 'world');
+        $this->assertEquals(['hello' => 'world'], $ary->val());
+
+        $ary->set('hello', ['world' => 'hi']);
+        $this->assertEquals(['hello' => ['world' => 'hi']], $ary->val());
+
+        $ary->set('hello.world', 'utils');
+        $this->assertEquals(['hello' => ['world' => 'utils']], $ary->val());
+
+        $ary->val([])->set('hi.utils', 'world');
+        $this->assertEquals(['hi' => ['utils' => 'world']], $ary->val());
+
+        $ary = Ary::new(['hello' => Ary::new(['world' => 'hi'])]);
+        $ary->set('hello.world', 'utils');
+        $this->assertEquals('utils', $ary->get('hello.world'));
+        $this->assertEquals(['hello' => Ary::new(['world' => 'utils'])], $ary->val());
     }
 
     /**
@@ -81,6 +135,32 @@ class AryTest extends TestCase
         $this->assertEquals(array_keys($array, null, true), $ary->keys(null, true)->val());
     }
 
+    public function testKeyToUpperCase()
+    {
+        $ary = Ary::new(['a' => 0, 'b' => 1]);
+        $this->assertEquals(['A' => 0, 'B' => 1], $ary->keyToUpperCase()->val());
+    }
+
+    public function testKeyToLowerCase()
+    {
+        $ary = Ary::new(['A' => 0, 'B' => 1]);
+        $this->assertEquals(['a' => 0, 'b' => 1], $ary->keyToLowerCase()->val());
+    }
+
+    /**
+     * @depends testValues
+     * @depends testKeys
+     */
+    public function testDivide()
+    {
+        $array = ['x' => 'a', 'y' => 'b', 'z' => 'c', 'd', 'e'];
+        $ary = Ary::new($array);
+        list($key, $val) = $ary->divide();
+
+        $this->assertEquals(['x', 'y', 'z', 0, 1], $key->val());
+        $this->assertEquals(['a', 'b', 'c', 'd', 'e'], $val->val());
+    }
+
     public function testFirst()
     {
         $array = [1, 2, 3];
@@ -94,17 +174,17 @@ class AryTest extends TestCase
         $this->assertEquals($array['a'], $ary->first());
     }
 
-    public function testEnd()
+    public function testLast()
     {
         $array = [1, 2, 3];
         $ary = Ary::new($array);
 
-        $this->assertEquals($array[2], $ary->end());
+        $this->assertEquals($array[2], $ary->last());
 
         $array = [1, 2, 'b' => 3];
         $ary = Ary::new($array);
 
-        $this->assertEquals($array['b'], $ary->end());
+        $this->assertEquals($array['b'], $ary->last());
     }
 
     public function testFirstKey()
@@ -120,17 +200,17 @@ class AryTest extends TestCase
         $this->assertEquals('a', $ary->firstKey());
     }
 
-    public function testEndKey()
+    public function testLastKey()
     {
         $array = [1, 2, 3];
         $ary = Ary::new($array);
 
-        $this->assertEquals(2, $ary->endKey());
+        $this->assertEquals(2, $ary->lastKey());
 
         $array = [1, 2, 'b' => 3];
         $ary = Ary::new($array);
 
-        $this->assertEquals('b', $ary->endKey());
+        $this->assertEquals('b', $ary->lastKey());
     }
 
     public function testLimit()
@@ -238,16 +318,16 @@ class AryTest extends TestCase
         $this->assertEquals(in_array('12.4', $array, true), $ary->exist('12.4', true));
     }
 
-    public function testKeyExist()
+    public function testExistKey()
     {
         $array = ['first' => null, 'second' => 2, 3];
         $ary = Ary::new($array);
 
-        $this->assertEquals(array_key_exists('first', $array), $ary->keyExist('first'));
+        $this->assertEquals(array_key_exists('first', $array), $ary->existKey('first'));
         // 与 isset 的区别
-        $this->assertEquals(isset($array['first']), !$ary->keyExist('first'));
+        $this->assertEquals(isset($array['first']), !$ary->existKey('first'));
         // 数字字符串的键名默认转为数字索引
-        $this->assertEquals(array_key_exists('0', $array), $ary->keyExist('0'));
+        $this->assertEquals(array_key_exists('0', $array), $ary->existKey('0'));
     }
 
     public function testIsSet()
@@ -260,6 +340,15 @@ class AryTest extends TestCase
         $this->assertEquals(isset($array['second']), $ary->isSet('second'));
         // 数字字符串的键名默认转为数字索引
         $this->assertEquals(isset($array['0']), $ary->isSet('0'));
+    }
+
+    public function testIsAssoc()
+    {
+        $this->assertTrue(Ary::new(['a' => 'a', 0 => 'b'])->isAssoc());
+        $this->assertTrue(Ary::new([1 => 'a', 0 => 'b'])->isAssoc());
+        $this->assertTrue(Ary::new([1 => 'a', 2 => 'b'])->isAssoc());
+        $this->assertFalse(Ary::new([0 => 'a', 1 => 'b'])->isAssoc());
+        $this->assertFalse(Ary::new(['a', 'b'])->isAssoc());
     }
 
     public function testSort()
@@ -342,6 +431,36 @@ class AryTest extends TestCase
         $this->assertEquals($array, $ary->val());
     }
 
+    public function testMax()
+    {
+        $max = Ary::new([1, 7, 9, 23, 2, 0])->max();
+        $this->assertEquals(23, $max);
+    }
+
+    public function testMin()
+    {
+        $min = Ary::new([1, 7, 9, 23, 2, 0])->min();
+        $this->assertEquals(0, $min);
+    }
+
+    public function testMaxKey()
+    {
+        $maxKey = Ary::new([2, 2, 1, 2, 1, 1, 2])->maxKey();
+        $this->assertEquals(0, $maxKey);
+
+        $maxKey = Ary::new(['hello' => 1, 'world' => 2, 'hi' => 1, 'utils' => 2])->maxKey();
+        $this->assertEquals('world', $maxKey);
+    }
+
+    public function testMinKey()
+    {
+        $minKey = Ary::new([2, 2, 1, 2, 1, 1, 2])->minKey();
+        $this->assertEquals(2, $minKey);
+
+        $minKey = Ary::new(['hello' => 1, 'world' => 2, 'hi' => 1, 'utils' => 2])->minKey();
+        $this->assertEquals('hello', $minKey);
+    }
+
     public function testShuffle()
     {
         $ary = Ary::new(range(1, 20));
@@ -363,6 +482,16 @@ class AryTest extends TestCase
         $ary = Ary::new($array);
 
         $this->assertEquals(array_reverse($array), $ary->reverse()->toArray());
+    }
+
+    public function testExcept()
+    {
+        $array = [1, 'hello' => 'world', 'hi' => 'utils', 2, 99 => 100];
+        $ary = Ary::new($array);
+
+        $this->assertEquals([1, 2, 99 => 100], $ary->except('hello', 'hi')->val());
+        $this->assertEquals([1, 2, 99 => 100], $ary->except('none')->val());
+        $this->assertEmpty($ary->except(0, 1, 99)->val());
     }
 
     public function testPush()
@@ -461,6 +590,7 @@ class AryTest extends TestCase
     /**
      * @depends testKeys
      * @depends testSearch
+     * @depends testSlice
      * @depends testLimit
      */
     public function testBefore()
@@ -485,6 +615,7 @@ class AryTest extends TestCase
     /**
      * @depends testKeys
      * @depends testSearch
+     * @depends testSlice
      * @depends testTail
      */
     public function testAfter()
@@ -504,6 +635,42 @@ class AryTest extends TestCase
         $this->assertNotEquals($a, $ary->after(233, true, false));
         // 确认值不存在返回空
         $this->assertEmpty($ary->after('zane')->val());
+    }
+
+    /**
+     * @depends testKeys
+     * @depends testSearch
+     * @depends testSlice
+     * @depends testLimit
+     */
+    public function testBeforeKey()
+    {
+        $array = ['hello' => 'world', 'hi' => 'utils', 'I' => 'am', 'very' => 'nice', 233];
+        $ary = Ary::new($array);
+
+        $this->assertEquals($ary->limit(1), $ary->beforeKey('hi', false));
+        $this->assertEquals($ary->limit(2), $ary->beforeKey('hi', true));
+        $this->assertEquals($ary->limit(4), $ary->beforeKey(0, false));
+        $this->assertEquals($ary, $ary->beforeKey(0, true));
+        $this->assertEmpty($ary->beforeKey(1)->val());
+    }
+
+    /**
+     * @depends testKeys
+     * @depends testSearch
+     * @depends testSlice
+     * @depends testTail
+     */
+    public function testAfterKey()
+    {
+        $array = ['hello' => 'world', 'hi' => 'utils', 'I' => 'am', 'very' => 'nice', 233];
+        $ary = Ary::new($array);
+
+        $this->assertEquals($ary->tail(3), $ary->afterKey('hi', false));
+        $this->assertEquals($ary->tail(4), $ary->afterKey('hi', true));
+        $this->assertEquals($ary->limit(0), $ary->afterKey(0, false));
+        $this->assertEquals($ary, $ary->afterKey('hello', true));
+        $this->assertEmpty($ary->afterKey(1)->val());
     }
 
     public function testReplace()
@@ -783,7 +950,7 @@ EOT;
         $ary['hello'] = 'other';
         $this->assertEquals('other', $ary['hello']);
         $ary[] = 'dot';
-        $this->assertEquals('dot', $ary->end());
+        $this->assertEquals('dot', $ary->last());
     }
 
     public function testCountable()

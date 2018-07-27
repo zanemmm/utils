@@ -31,7 +31,9 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
         'beforePreserveKeys'   => true,
         'afterPreserveKeys'    => true,
         'beforeContain'        => false,
-        'afterContain'         => true,
+        'afterContain'         => false,
+        'beforeKeyContain'     => false,
+        'afterKeyContain'      => false,
         'joinGlue'             => '',
         'eachRecursive'        => false,
         'filterFlag'           => 0,
@@ -61,6 +63,66 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
         }
 
         $this->val = $array;
+
+        return $this;
+    }
+
+    /**
+     * 使用「点」式语法从深度嵌套数组中取回指定的值
+     * @see https://laravel.com/docs/5.6/helpers#method-array-get
+     * @param string $dotKey 符合「点」式语法的键名
+     * @param mixed|null $default 默认值
+     * @return mixed
+     */
+    public function get(string $dotKey = null, $default = null)
+    {
+        if (is_null($dotKey)) {
+            return $this->val;
+        }
+
+        if ($this->existKey($dotKey)) {
+            return $this->val[$dotKey];
+        }
+
+        $keys = explode('.', $dotKey);
+        $array = $this->val;
+
+        foreach ($keys as $key) {
+            if (is_array($array) && array_key_exists($key, $array)) {
+                $array = $array[$key];
+            } elseif ($array instanceof static && $array->existKey($key)) {
+                $array = $array[$key];
+            } else {
+                return $default;
+            }
+        }
+
+        return $array;
+    }
+
+    /**
+     * 使用「点」式语法从深度嵌套数组中设置指定的值
+     * @see https://laravel.com/docs/5.6/helpers#method-array-set
+     * @param string $dotKey 符合「点」式语法的键名
+     * @param mixed $val 要设置的值
+     * @return Ary 原实例
+     */
+    public function set(string $dotKey, $val): self
+    {
+        $keys = explode('.', $dotKey);
+        $array = &$this->val;
+
+        while (count($keys) > 1) {
+            $key = array_shift($keys);
+
+            if (!isset($array[$key]) || !static::accessible($array[$key])) {
+                $array[$key] = [];
+            }
+
+            $array = &$array[$key];
+        }
+
+        $array[array_shift($keys)] = $val;
 
         return $this;
     }
@@ -101,6 +163,37 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
+     * 返回一个全部键名大写的新实例
+     * @return Ary 新实例
+     */
+    public function keyToUpperCase(): self
+    {
+        $val = array_change_key_case($this->val, CASE_UPPER);
+
+        return static::val($val);
+    }
+
+    /**
+     * 返回一个全部键名小写的新实例
+     * @return Ary 新实例
+     */
+    public function keyToLowerCase()
+    {
+        $val = array_change_key_case($this->val, CASE_LOWER);
+
+        return static::val($val);
+    }
+
+    /**
+     * 返回两个实例，一个包含原本实例的键，另一个包含原本实例的值
+     * @return Ary[]
+     */
+    public function divide(): array
+    {
+        return [$this->keys(), $this->values()];
+    }
+
+    /**
      * 获取实例数组中第一个元素的值
      * @return mixed
      */
@@ -113,7 +206,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      * 获取实例数组中最后一个元素的值
      * @return mixed
      */
-    public function end()
+    public function last()
     {
         return end($this->val);
     }
@@ -132,9 +225,9 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      * 获取实例数组中最后一个元素的键
      * @return int|null|string
      */
-    public function endKey()
+    public function lastKey()
     {
-        $this->end();
+        $this->last();
         return key($this->val);
     }
 
@@ -271,7 +364,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      * @param int|string $key 要检查的键
      * @return bool
      */
-    public function keyExist($key): bool
+    public function existKey($key): bool
     {
         // isset 性能比 array_key_exists 高，但 isset 在数组成员的值为 null 时会返回 false
         // 所以利用 || 运算符的短路特性，仅当 isset 为 false 时使用 array_key_exists 判断是否存在该键
@@ -287,6 +380,17 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     public function isSet($key): bool
     {
         return isset($this->val[$key]);
+    }
+
+    /**
+     * 判断实例数组是否为关联数组
+     * @return bool
+     */
+    public function isAssoc()
+    {
+        $keys = array_keys($this->val);
+
+        return array_keys($keys) !== $keys;
     }
 
     /**
@@ -398,6 +502,42 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
+     * 返回实例数组中的最大值
+     * @return mixed
+     */
+    public function max()
+    {
+        return static::new($this->val)->sort(false, false, SORT_REGULAR)->first();
+    }
+
+    /**
+     * 返回实例数组中的最小值
+     * @return mixed
+     */
+    public function min()
+    {
+        return static::new($this->val)->sort(true, false, SORT_REGULAR)->first();
+    }
+
+    /**
+     * 返回实例数组中的最大值的键名
+     * @return mixed
+     */
+    public function maxKey()
+    {
+        return static::new($this->val)->sort(false, true, SORT_REGULAR)->firstKey();
+    }
+
+    /**
+     * 返回实例数组中的最小值的键名
+     * @return mixed
+     */
+    public function minKey()
+    {
+        return static::new($this->val)->sort(true, true, SORT_REGULAR)->firstKey();
+    }
+
+    /**
      * 打乱实例数组顺序
      * @see http://php.net/manual/zh/function.shuffle.php
      * @return Ary 原实例
@@ -433,6 +573,20 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
         $val = array_reverse($this->val);
 
         return static::new($val);
+    }
+
+    /**
+     * 移除实例数组中指定键名的值
+     * @param array ...$keys 指定键名
+     * @return Ary 原实例
+     */
+    public function except(...$keys): self
+    {
+        foreach ($keys as $key) {
+            unset($this->val[$key]);
+        }
+
+        return $this;
     }
 
     /**
@@ -572,6 +726,46 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
+     * 获取指定键名之前的元素所组成的实例数组
+     * @param string|int $key 指定的键名
+     * @param bool|null $contain 是否包含该键名的元素
+     * @return Ary 新实例
+     */
+    public function beforeKey($key, bool $contain = null): self
+    {
+        if (!$this->existKey($key)) {
+            return static::new([]);
+        }
+        
+        $len = $this->keys()->search($key, true);
+        if (static::default($contain, 'beforeKeyContain')) {
+            $len++;
+        }
+
+        return $this->slice(0, $len, true);
+    }
+
+    /**
+     * 获取指定键名之后的元素所组成的实例数组
+     * @param string|int $key 指定的键名
+     * @param bool|null $contain 是否包含该键名的元素
+     * @return Ary 新实例
+     */
+    public function afterKey($key, bool $contain = null)
+    {
+        if (!$this->existKey($key)) {
+            return static::new([]);
+        }
+
+        $offset = $this->keys()->search($key, true);
+        if (!static::default($contain, 'afterKeyContain')) {
+            $offset++;
+        }
+
+        return $this->slice($offset, null, true);
+    }
+
+    /**
      * 使用传递的实例数组替换原实例数组中的元素
      * @see http://php.net/manual/zh/function.array-replace.php
      * @param Ary[] ...$arrays 替换的实例数组
@@ -588,6 +782,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
 
     /**
      * 清除实例数组中所有等值为 false 的元素（包括： null false 0 '' []）
+     * 警告：空的 Ary 实例并不会清除
      * @see http://php.net/manual/zh/function.array-filter.php
      * @return Ary 原实例
      */
@@ -720,7 +915,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 确认实例数组中没有等值为 false 的值，包括： false null 0 ''
+     * 确认实例数组中没有等值为 false 的值（注：空数组除外），包括： false null 0 ''
      * @return bool
      */
     public function allTrue(): bool
@@ -947,6 +1142,16 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     public static function newFill(int $startIndex, int $num, $val): self
     {
         return static::new(array_fill($startIndex, $num, $val));
+    }
+
+    /**
+     * 判断 $val 是否能以数组的方式访问
+     * @param mixed $val
+     * @return bool
+     */
+    public static function accessible($val): bool
+    {
+        return is_array($val) || $val instanceof ArrayAccess;
     }
 
     /**
