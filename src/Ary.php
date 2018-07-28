@@ -6,6 +6,8 @@ use ArrayAccess;
 use ArrayIterator;
 use Countable;
 use JsonSerializable;
+use Zane\Utils\Exceptions\KeyTypeException;
+use Zane\Utils\Exceptions\AryOutOfRangeException;
 
 class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
 {
@@ -34,9 +36,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
         'afterContain'         => false,
         'beforeKeyContain'     => false,
         'afterKeyContain'      => false,
+        'intersectCompKey'     => false,
+        'diffCompKey'          => false,
         'joinGlue'             => '',
         'eachRecursive'        => false,
         'filterFlag'           => 0,
+        'flatPreserveKeys'     => false,
         'toArrayRecursive'     => false,
         'toJsonOptions'        => JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT,
         'toJsonDepth'          => 512,
@@ -125,6 +130,48 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
         $array[array_shift($keys)] = $val;
 
         return $this;
+    }
+
+    /**
+     * 使用「点」式语法判断是否存在指定键名的值，多个键名要全部存在才返回 true
+     * @see https://laravel.com/docs/5.6/helpers#method-array-has
+     * @param string[] $dotKeys 符合「点」式语法的键名
+     * @return bool
+     */
+    public function has(string ...$dotKeys): bool
+    {
+        foreach ($dotKeys as $dotKey) {
+            if ($this->existKey($dotKey)) {
+                continue;
+            }
+
+            $keys = explode('.', $dotKey);
+            $array = $this->val;
+
+            foreach ($keys as $key) {
+                if (is_array($array) && array_key_exists($key, $array)) {
+                    $array = $array[$key];
+                } elseif ($array instanceof static && $array->existKey($key)) {
+                    $array = $array[$key];
+                } else {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * 返回只包含指定键名的新实例
+     * @param array ...$keys
+     * @return Ary 新实例
+     */
+    public function only(...$keys)
+    {
+        $val = array_intersect_key($this->val, array_flip($keys));
+
+        return static::new($val);
     }
 
     /**
@@ -323,6 +370,85 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
             return static::new($object->do($this->val, $columnKey, $indexKey));
         }
         return static::new(array_column($this->val, $columnKey, $indexKey));
+    }
+
+    /**
+     * column 的加强版，能获取多列，但不会获取对象的属性
+     * @param array|null $columnKeys 包含指定键的数组
+     * @param mixed|null $indexKey 作为返回数组的索引或键的列
+     * @return Ary 新实例
+     * @throws KeyTypeException
+     */
+    public function select(array $columnKeys = null, $indexKey = null): self
+    {
+        if (!is_null($indexKey) && !is_string($indexKey) && !is_int($indexKey)) {
+            throw new KeyTypeException();
+        }
+
+        if (empty($columnKeys)) {
+            return static::new($this->val);
+        }
+
+        $array = [];
+        foreach ($this->val as $rowKey => $rowVal) {
+            if (is_array($rowVal) || $rowVal instanceof static) {
+                $row = [];
+                foreach ($rowVal as $colKey => $colVal) {
+                    if (in_array($colKey, $columnKeys)) {
+                        $row[$colKey] = $colVal;
+                    }
+                }
+                if (is_null($indexKey) || !isset($rowVal[$indexKey])) {
+                    $array[] = $row;
+                } else {
+                    $array[$rowVal[$indexKey]] = $row;
+                }
+            }
+        }
+
+        return static::new($array);
+    }
+
+    /**
+     * 返回与指定列条件相符的所有行组成的实例
+     * @param string|int $columnKey 指定列键名
+     * @param string $operator 比较符，包括： >、>=、==、===、<、<=
+     * @param mixed $expected 比较值
+     * @return Ary 新的实例
+     * @throws KeyTypeException
+     */
+    public function where($columnKey, string $operator, $expected): Ary
+    {
+        if (!is_string($columnKey) && !is_int($columnKey)) {
+            throw new KeyTypeException();
+        }
+
+        $fn = function ($row) use ($columnKey, $operator, $expected) {
+            if (!is_array($row) && !($row instanceof static)) {
+                return false;
+            }
+            $val = $row[$columnKey];
+            switch ($operator) {
+                case '>':
+                    return $val >  $expected;
+                case '>=':
+                    return $val >=  $expected;
+                case '==':
+                    return $val ==  $expected;
+                case '===':
+                    return $val === $expected;
+                case '<':
+                    return $val <   $expected;
+                case '<=':
+                    return $val <=  $expected;
+                default:
+                    return false;
+            }
+        };
+
+        $val = array_filter($this->val, $fn);
+
+        return static::new($val);
     }
 
     /**
@@ -544,7 +670,6 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      */
     public function shuffle(): self
     {
-        // todo 检查是否打乱成功
         shuffle($this->val);
 
         return $this;
@@ -781,6 +906,70 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
+     * 返回两实例数组的值的交集
+     * @see http://php.net/manual/zh/function.array-intersect.php
+     * @see http://php.net/manual/zh/function.array-intersect-assoc.php
+     * @param Ary $ary 用于比较的实例
+     * @param bool|null $compKey 是否比较键名
+     * @return Ary 新实例
+     */
+    public function intersect(Ary $ary, bool $compKey = null): Ary
+    {
+        if (static::default($compKey, 'intersectCompKey')) {
+            $val = array_intersect_assoc($this->val, $ary->val());
+        } else {
+            $val = array_intersect($this->val, $ary->val());
+        }
+
+        return static::new($val);
+    }
+
+    /**
+     * 返回两实例数组的值的差集
+     * @see http://php.net/manual/zh/function.array-diff.php
+     * @see http://php.net/manual/zh/function.array-diff-assoc.php
+     * @param Ary $ary 用于比较的实例
+     * @param bool|null $compKey 是否比较键名
+     * @return Ary 新实例
+     */
+    public function diff(Ary $ary, bool $compKey = null): Ary
+    {
+        if (static::default($compKey, 'diffCompKey')) {
+            $val = array_diff_assoc($this->val, $ary->val());
+        } else {
+            $val = array_diff($this->val, $ary->val());
+        }
+
+        return static::new($val);
+    }
+
+    /**
+     * 使用键名比较计算实例数组的交集
+     * @see http://php.net/manual/zh/function.array-intersect-key.php
+     * @param Ary $ary 用于比较的实例
+     * @return Ary 新实例
+     */
+    public function intersectKey(Ary $ary): Ary
+    {
+        $val = array_intersect_key($this->val, $ary->val());
+
+        return static::new($val);
+    }
+
+    /**
+     * 使用键名比较计算实例数组的差集
+     * @see http://php.net/manual/zh/function.array-diff-key.php
+     * @param Ary $ary 用于比较的实例
+     * @return Ary 新实例
+     */
+    public function diffKey(Ary $ary): Ary
+    {
+        $val = array_diff_key($this->val, $ary->val());
+
+        return static::new($val);
+    }
+    
+    /**
      * 清除实例数组中所有等值为 false 的元素（包括： null false 0 '' []）
      * 警告：空的 Ary 实例并不会清除
      * @see http://php.net/manual/zh/function.array-filter.php
@@ -871,6 +1060,27 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
+     * 将一个多维数组扁平化为一个一维数组
+     * @param bool|null $preserveKeys true 保持值不为数组或 Ary 对象的字符串键名，重置数字索引，false 则删除所有键名，重新以数字索引
+     * @return Ary 新实例
+     */
+    public function flat(bool $preserveKeys = null)
+    {
+        $array = [];
+        $fn = function ($val, $key, $preserveKeys) use (&$array) {
+            if ($preserveKeys && is_string($key)) {
+                $array[$key] = $val;
+            } else {
+                $array[] = $val;
+            }
+        };
+
+        $this->each($fn, static::default($preserveKeys, 'flatPreserveKeys'), true);
+
+        return static::new($array);
+    }
+
+    /**
      * 以指定长度将一个值填充进实例数组
      * @see http://php.net/manual/zh/function.array-pad.php
      * @param int $size 新实例数组的长度
@@ -937,11 +1147,15 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      * 从实例数组中随机取出一个或多个元素组成新的实例，保持索引关联
      * @see http://php.net/manual/zh/function.array-rand.php
      * @param int $num 取出数量
-     * @return Ary
+     * @return Ary 新实例
+     * @throws AryOutOfRangeException
      */
     public function rand(int $num): self
     {
-        // todo 抛出异常
+        if ($num > count($this->val)) {
+            throw new AryOutOfRangeException();
+        }
+
         if ($num === 1) {
             $key = array_rand($this->val, $num);
             $val = [$key => $this->val[$key]];
@@ -955,18 +1169,28 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     /**
      * 从实例数组中随机取出一个元素的值
      * @return mixed
+     * @throws AryOutOfRangeException
      */
     public function randVal()
     {
+        if (empty($this->val)) {
+            throw new AryOutOfRangeException();
+        }
+
         return $this->val[array_rand($this->val, 1)];
     }
 
     /**
      * 从实例数组中随机取出一个元素的键名
      * @return mixed
+     * @throws AryOutOfRangeException
      */
     public function randKey()
     {
+        if (empty($this->val)) {
+            throw new AryOutOfRangeException();
+        }
+
         return array_rand($this->val, 1);
     }
 
@@ -979,20 +1203,30 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     {
         $array = [];
         if (static::default($recursive, 'toArrayRecursive')) {
-            foreach ($this->val as $key => $item) {
-                if ($item instanceof static) {
-                    $array[$key] = $item->toArray(true);
+            $array = static::valToArray($this->val);
+        } else {
+            foreach ($this->val as $k => $v) {
+                if ($v instanceof static) {
+                    $array[$k] = $v->val();
                 } else {
-                    $array[$key] = $item;
+                    $array[$k] = $v;
                 }
             }
-        } else {
-            foreach ($this->val as $key => $item) {
-                if ($item instanceof static) {
-                    $array[$key] = $item->val();
-                } else {
-                    $array[$key] = $item;
-                }
+        }
+
+        return $array;
+    }
+
+    protected static function valToArray(array $val)
+    {
+        $array = $val;
+        foreach ($array as $k => $v) {
+            if (is_array($v)) {
+                $array[$k] = static::valToArray($v);
+            } elseif ($v instanceof static) {
+                $array[$k] = static::valToArray($v->val());
+            } else {
+                $array[$k] = $v;
             }
         }
 

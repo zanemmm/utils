@@ -3,6 +3,7 @@ namespace Zane\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Zane\Utils\Ary;
+use Zane\Utils\Exceptions\AryOutOfRangeException;
 
 class AryTest extends TestCase
 {
@@ -85,6 +86,41 @@ class AryTest extends TestCase
         $this->assertEquals('utils', $ary->get('hello.world'));
         $this->assertEquals(['hello' => Ary::new(['world' => 'utils'])], $ary->val());
     }
+    
+    public function testHas()
+    {
+        $array = ['products.desk' => ['price' => 100]];
+        $this->assertTrue(Ary::new($array)->has('products.desk'));
+        $this->assertFalse(Ary::new($array)->has('products.empty'));
+        $this->assertFalse(Ary::new($array)->has('products'));
+
+        $array = ['products' =>['desk' => ['price' => 100]]];
+        $this->assertTrue(Ary::new($array)->has('products'));
+        $this->assertTrue(Ary::new($array)->has('products.desk'));
+        $this->assertTrue(Ary::new($array)->has('products.desk.price'));
+        $this->assertFalse(Ary::new($array)->has('products.price'));
+
+        $array = ['foo' => null, 'bar' => ['baz' => null]];
+        $this->assertTrue(Ary::new($array)->has('foo'));
+        $this->assertTrue(Ary::new($array)->has('bar.baz'));
+
+        $ary = Ary::new(['products' => Ary::new(['desk' => Ary::new(['price' => 100])])]);
+        $this->assertTrue($ary->has('products'));
+        $this->assertTrue($ary->has('products.desk'));
+        $this->assertTrue($ary->has('products.desk.price'));
+
+        $ary = Ary::new(['foo', 'bar']);
+        $this->assertFalse($ary->has('hello'));
+        $this->assertFalse($ary->has('hello.world'));
+    }
+
+    public function testOnly()
+    {
+        $array = ['name' => 'Desk', 'price' => 100, 'orders' => 10];
+        $ary = Ary::new($array);
+
+        $this->assertEquals(['name' => 'Desk', 'price' => 100], $ary->only('name', 'price')->val());
+    }
 
     /**
      * @depends testVal
@@ -112,6 +148,13 @@ class AryTest extends TestCase
         $ary = Ary::new($d);
 
         $this->assertEquals($c, $ary->toArray(true));
+
+
+        $e = ['hello' => ['world' => Ary::new(['utils'])]];
+        $f = ['hello' => ['world' => ['utils']]];
+        $ary = Ary::new($e);
+
+        $this->assertEquals($f, $ary->toArray(true));
     }
 
 
@@ -291,6 +334,128 @@ class AryTest extends TestCase
         $col = array_column($AryArray, 'name', 'val');
         $val = $ary->column('name', 'val')->val();
         $this->assertEquals($col, $val);
+    }
+
+    /**
+     * @expectedException \Zane\Utils\Exceptions\KeyTypeException
+     */
+    public function testSelect()
+    {
+        $array = [
+            ['id' => 1, 'name' => 'a', 'val' => 'x'],
+            ['id' => 2, 'name' => 'b', 'val' => 'y'],
+            ['id' => 3, 'name' => 'c', 'val' => 'z']
+        ];
+        $AryArray = [
+            Ary::new(['id' => 1, 'name' => 'a', 'val' => 'x']),
+            Ary::new(['id' => 2, 'name' => 'b', 'val' => 'y']),
+            Ary::new(['id' => 3, 'name' => 'c', 'val' => 'z'])
+        ];
+        $data = [
+            1 => ['name' => 'a'],
+            2 => ['name' => 'b'],
+            3 => ['name' => 'c']
+        ];
+        $val = Ary::new($array)->select(['name'], 'id')->val();
+        $this->assertEquals($data, $val);
+        $val = Ary::new($AryArray)->select(['name'], 'id')->val();
+        $this->assertEquals($data, $val);
+
+        $data = [
+            1 => ['name' => 'a', 'val' => 'x'],
+            2 => ['name' => 'b', 'val' => 'y'],
+            3 => ['name' => 'c', 'val' => 'z']
+        ];
+        $val = Ary::new($array)->select(['name', 'val'], 'id')->val();
+        $this->assertEquals($data, $val);
+        $val = Ary::new($AryArray)->select(['name', 'val'], 'id')->val();
+        $this->assertEquals($data, $val);
+
+        $data = [
+            0 => ['name' => 'a', 'val' => 'x'],
+            1 => ['name' => 'b', 'val' => 'y'],
+            2 => ['name' => 'c', 'val' => 'z']
+        ];
+        $val = Ary::new($array)->select(['name', 'val'])->val();
+        $this->assertEquals($data, $val);
+        $val = Ary::new($AryArray)->select(['name', 'val'])->val();
+        $this->assertEquals($data, $val);
+        $val = Ary::new($AryArray)->select(['name', 'val'], 'other')->val();
+        $this->assertEquals($data, $val);
+        $this->assertEquals(Ary::new($AryArray), Ary::new($AryArray)->select());
+        // throw KeyTypeException
+        $this->assertEquals($data, Ary::new($AryArray)->select(['name', 'val'], []));
+    }
+
+    /**
+     * @expectedException \Zane\Utils\Exceptions\KeyTypeException
+     */
+    public function testWhere()
+    {
+        $array = [
+            ['id' => 1, 'name' => 'a', 'val' => 'x'],
+            ['id' => 2, 'name' => 'b', 'val' => 'y'],
+            ['id' => 3, 'name' => 'c', 'val' => 'z']
+        ];
+        $AryArray = [
+            Ary::new(['id' => 1, 'name' => 'a', 'val' => 'x']),
+            Ary::new(['id' => 2, 'name' => 'b', 'val' => 'y']),
+            Ary::new(['id' => 3, 'name' => 'c', 'val' => 'z'])
+        ];
+        $data = [
+            2 => ['id' => 3, 'name' => 'c', 'val' => 'z']
+        ];
+        $val = Ary::new($array)->where('id', '>', 2)->val();
+        $this->assertEquals($data, $val);
+
+        $data = [
+            1 => ['id' => 2, 'name' => 'b', 'val' => 'y'],
+            2 => ['id' => 3, 'name' => 'c', 'val' => 'z']
+        ];
+        $val = Ary::new($array)->where('id', '>=', 2)->val();
+        $this->assertEquals($data, $val);
+
+        $data = [
+            ['id' => 1, 'name' => 'a', 'val' => 'x'],
+        ];
+        $val = Ary::new($array)->where('id', '<', 2)->val();
+        $this->assertEquals($data, $val);
+
+        $data = [
+            ['id' => 1, 'name' => 'a', 'val' => 'x'],
+            ['id' => 2, 'name' => 'b', 'val' => 'y'],
+        ];
+        $val = Ary::new($array)->where('id', '<=', 2)->val();
+        $this->assertEquals($data, $val);
+
+        $data = [
+            1 => ['id' => 2, 'name' => 'b', 'val' => 'y'],
+        ];
+        $val = Ary::new($array)->where('id', '==', '2')->val();
+        $this->assertEquals($data, $val);
+
+        $data = [
+            1 => ['id' => 2, 'name' => 'b', 'val' => 'y'],
+        ];
+        $val = Ary::new($array)->where('id', '===', 2)->val();
+        $this->assertEquals($data, $val);
+        $val = Ary::new($array)->where('id', '===', '2')->val();
+        $this->assertEmpty($val);
+
+        $data = [
+            Ary::new(['id' => 1, 'name' => 'a', 'val' => 'x']),
+        ];
+        $val = Ary::new($AryArray)->where('id', '===', 1)->val();
+        $this->assertEquals($data, $val);
+
+        $val = Ary::new($AryArray)->where('id', '?', 1)->val();
+        $this->assertEmpty($val);
+
+        $val = Ary::new([1, 2, 3])->where('id', '==', 1)->val();
+        $this->assertEmpty($val);
+
+        // throw KeyTypeException
+        $val = Ary::new($array)->where(null, '===', 2)->val();
     }
 
     public function testCountValues()
@@ -687,6 +852,44 @@ class AryTest extends TestCase
         $this->assertEquals($basket, $aryBasket->val());
     }
 
+    public function testIntersect()
+    {
+        $ary1 = Ary::new(['a' => 'green', 'red', 'blue']);
+        $ary2 = Ary::new(['b' => 'green', 'yellow', 'red']);
+        $this->assertEquals(['a' => 'green', 'red'], $ary1->intersect($ary2, false)->val());
+
+        $ary1 = Ary::new(['a' => 'green', 'b' => 'brown', 'c' => 'blue', 'red']);
+        $ary2 = Ary::new(['a' => 'green', 'b' => 'yellow', 'blue', 'red']);
+        $this->assertEquals(['a' => 'green'], $ary1->intersect($ary2, true)->val());
+    }
+
+    public function testDiff()
+    {
+        $ary1 = Ary::new(['a' => 'green', 'red', 'blue', 'red']);
+        $ary2 = Ary::new(['b' => 'green', 'yellow', 'red']);
+        $this->assertEquals([1 => 'blue'], $ary1->diff($ary2, false)->val());
+
+        $ary1 = Ary::new(['a' => 'green', 'b' => 'brown', 'c' => 'blue', 'red']);
+        $ary2 = Ary::new(['a' => 'green', 'yellow', 'red']);
+        $this->assertEquals(['b' => 'brown', 'c' => 'blue', 'red'], $ary1->diff($ary2, true)->val());
+    }
+
+    public function testIntersectKey()
+    {
+        $ary1 = Ary::new(['blue' => 1, 'red' => 2, 'green' => 3, 'purple' => 4]);
+        $ary2 = Ary::new(['green' => 5, 'blue' => 6, 'yellow' => 7, 'cyan' => 8]);
+
+        $this->assertEquals(['blue' => 1, 'green' => 3], $ary1->intersectKey($ary2)->val());
+    }
+
+    public function testDiffKey()
+    {
+        $ary1 = Ary::new(['blue' => 1, 'red' => 2, 'green' => 3, 'purple' => 4]);
+        $ary2 = Ary::new(['green' => 5, 'blue' => 6, 'yellow' => 7, 'cyan' => 8]);
+
+        $this->assertEquals(['red' => 2, 'purple' => 4], $ary1->diffKey($ary2)->val());
+    }
+
     public function testClean()
     {
         $a = [0 => 'foo', 1 => false, 2 => -1, 3 => null, 4 => '', 5 => []];
@@ -773,6 +976,15 @@ class AryTest extends TestCase
         $this->assertEquals(array_reduce($array, $fn, 1), $ary->reduce($fn, 1));
     }
 
+    public function testFlat()
+    {
+        $array = ['a', 'b', 'c' => ['d', 'e' => ['f', 'g' => Ary::new(['h', 'i' => Ary::new(['j'])])]], 'x' => 'y'];
+        $ary = Ary::new($array);
+
+        $this->assertEquals(['a', 'b', 'd', 'f', 'h', 'j', 'y'], $ary->flat(false)->val());
+        $this->assertEquals(['a', 'b', 'd', 'f', 'h', 'j', 'x' => 'y'], $ary->flat(true)->val());
+    }
+
     public function testPad()
     {
         $array = [1, 2, 3];
@@ -832,6 +1044,9 @@ class AryTest extends TestCase
         $this->assertEquals(array_sum($array), $ary->sum());
     }
 
+    /**
+     * @expectedException \Zane\Utils\Exceptions\AryOutOfRangeException
+     */
     public function testRand()
     {
         $array = ['hello' => 1, 'world' => 2, 'x' => 3, 4, 5, 6];
@@ -841,22 +1056,34 @@ class AryTest extends TestCase
         $this->assertEquals(true, array_key_exists($ary->rand(1)->firstKey(), $array));
         $this->assertEquals(true, in_array($ary->rand(3)->first(), $array));
         $this->assertEquals(true, array_key_exists($ary->rand(3)->firstKey(), $array));
+        // throw AryOutOfRangeException
+        $this->assertEmpty(Ary::new([])->rand(1));
     }
 
+    /**
+     * @expectedException \Zane\Utils\Exceptions\AryOutOfRangeException
+     */
     public function testRandVal()
     {
         $array = ['hello' => 1, 'world' => 2, 'x' => 3, 4, 5, 6];
         $ary = Ary::new($array);
 
-        $this->assertEquals(true, in_array($ary->randVal(), $array));
+        $this->assertTrue(in_array($ary->randVal(), $array));
+        // throw AryOutOfRangeException
+        $this->assertEmpty(Ary::new([])->randVal());
     }
 
+    /**
+     * @expectedException \Zane\Utils\Exceptions\AryOutOfRangeException
+     */
     public function testRandKey()
     {
         $array = ['hello' => 1, 'world' => 2, 'x' => 3, 4, 5, 6];
         $ary = Ary::new($array);
 
         $this->assertEquals(true, array_key_exists($ary->randKey(), $array));
+        // throw AryOutOfRangeException
+        $this->assertEmpty(Ary::new([])->randKey());
     }
 
     public function testToJson()
