@@ -1,8 +1,8 @@
 <?php
 /**
- * AryOutOfRangeException 类
+ * KeyTypeException 类
  *
- * 超出数组范围异常
+ * 数组键名类型不符异常
  *
  * @package    utils
  * @license    MIT
@@ -10,8 +10,8 @@
  */
 namespace Zane\Utils\Exceptions;
 
-use OutOfRangeException;
+use Exception;
 
-class AryOutOfRangeException extends OutOfRangeException
+class AryKeyTypeException extends Exception
 {
 }

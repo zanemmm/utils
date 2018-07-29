@@ -337,7 +337,7 @@ class AryTest extends TestCase
     }
 
     /**
-     * @expectedException \Zane\Utils\Exceptions\KeyTypeException
+     * @expectedException \Zane\Utils\Exceptions\AryKeyTypeException
      */
     public function testSelect()
     {
@@ -383,12 +383,12 @@ class AryTest extends TestCase
         $val = Ary::new($AryArray)->select(['name', 'val'], 'other')->val();
         $this->assertEquals($data, $val);
         $this->assertEquals(Ary::new($AryArray), Ary::new($AryArray)->select());
-        // throw KeyTypeException
+        // throw AryKeyTypeException
         $this->assertEquals($data, Ary::new($AryArray)->select(['name', 'val'], []));
     }
 
     /**
-     * @expectedException \Zane\Utils\Exceptions\KeyTypeException
+     * @expectedException \Zane\Utils\Exceptions\AryKeyTypeException
      */
     public function testWhere()
     {
@@ -454,7 +454,7 @@ class AryTest extends TestCase
         $val = Ary::new([1, 2, 3])->where('id', '==', 1)->val();
         $this->assertEmpty($val);
 
-        // throw KeyTypeException
+        // throw AryKeyTypeException
         $val = Ary::new($array)->where(null, '===', 2)->val();
     }
 
@@ -483,6 +483,9 @@ class AryTest extends TestCase
         $this->assertEquals(in_array('12.4', $array, true), $ary->exist('12.4', true));
     }
 
+    /**
+     * @expectedException \Zane\Utils\Exceptions\AryKeyTypeException
+     */
     public function testExistKey()
     {
         $array = ['first' => null, 'second' => 2, 3];
@@ -493,8 +496,13 @@ class AryTest extends TestCase
         $this->assertEquals(isset($array['first']), !$ary->existKey('first'));
         // 数字字符串的键名默认转为数字索引
         $this->assertEquals(array_key_exists('0', $array), $ary->existKey('0'));
+        // throw AryKeyTypeException
+        $ary->existKey([]);
     }
 
+    /**
+     * @expectedException \Zane\Utils\Exceptions\AryKeyTypeException
+     */
     public function testIsSet()
     {
         $array = ['first' => null, 'second' => 2, 3];
@@ -505,6 +513,8 @@ class AryTest extends TestCase
         $this->assertEquals(isset($array['second']), $ary->isSet('second'));
         // 数字字符串的键名默认转为数字索引
         $this->assertEquals(isset($array['0']), $ary->isSet('0'));
+        // throw AryKeyTypeException
+        $ary->isSet([]);
     }
 
     public function testIsAssoc()

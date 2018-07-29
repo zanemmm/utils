@@ -1,4 +1,13 @@
 <?php
+/**
+ * Ary 类
+ *
+ * 提供各种方便的方法操作数组
+ *
+ * @package    utils
+ * @license    MIT
+ * @link       https://github.com/zanemmm/utils
+ */
 namespace Zane\Utils;
 
 use IteratorAggregate;
@@ -6,7 +15,7 @@ use ArrayAccess;
 use ArrayIterator;
 use Countable;
 use JsonSerializable;
-use Zane\Utils\Exceptions\KeyTypeException;
+use Zane\Utils\Exceptions\AryKeyTypeException;
 use Zane\Utils\Exceptions\AryOutOfRangeException;
 
 class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
@@ -78,6 +87,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      * @param string $dotKey 符合「点」式语法的键名
      * @param mixed|null $default 默认值
      * @return mixed
+     * @throws AryKeyTypeException
      */
     public function get(string $dotKey = null, $default = null)
     {
@@ -137,6 +147,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      * @see https://laravel.com/docs/5.6/helpers#method-array-has
      * @param string[] $dotKeys 符合「点」式语法的键名
      * @return bool
+     * @throws AryKeyTypeException
      */
     public function has(string ...$dotKeys): bool
     {
@@ -377,12 +388,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      * @param array|null $columnKeys 包含指定键的数组
      * @param mixed|null $indexKey 作为返回数组的索引或键的列
      * @return Ary 新实例
-     * @throws KeyTypeException
+     * @throws AryKeyTypeException
      */
     public function select(array $columnKeys = null, $indexKey = null): self
     {
-        if (!is_null($indexKey) && !is_string($indexKey) && !is_int($indexKey)) {
-            throw new KeyTypeException();
+        if (!is_null($indexKey) && !static::isValidKey($indexKey)) {
+            throw new AryKeyTypeException();
         }
 
         if (empty($columnKeys)) {
@@ -415,12 +426,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      * @param string $operator 比较符，包括： >、>=、==、===、<、<=
      * @param mixed $expected 比较值
      * @return Ary 新的实例
-     * @throws KeyTypeException
+     * @throws AryKeyTypeException
      */
     public function where($columnKey, string $operator, $expected): Ary
     {
-        if (!is_string($columnKey) && !is_int($columnKey)) {
-            throw new KeyTypeException();
+        if (!static::isValidKey($columnKey)) {
+            throw new AryKeyTypeException();
         }
 
         $fn = function ($row) use ($columnKey, $operator, $expected) {
@@ -489,9 +500,13 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      * @see http://php.net/manual/zh/function.array-key-exists.php
      * @param int|string $key 要检查的键
      * @return bool
+     * @throws AryKeyTypeException
      */
     public function existKey($key): bool
     {
+        if (!static::isValidKey($key)) {
+            throw new AryKeyTypeException();
+        }
         // isset 性能比 array_key_exists 高，但 isset 在数组成员的值为 null 时会返回 false
         // 所以利用 || 运算符的短路特性，仅当 isset 为 false 时使用 array_key_exists 判断是否存在该键
         return (isset($this->val[$key]) || array_key_exists($key, $this->val));
@@ -502,9 +517,14 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      * @see http://php.net/manual/zh/function.isset.php
      * @param int|string $key
      * @return bool
+     * @throws AryKeyTypeException
      */
     public function isSet($key): bool
     {
+        if (!static::isValidKey($key)) {
+            throw new AryKeyTypeException();
+        }
+
         return isset($this->val[$key]);
     }
 
@@ -855,6 +875,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      * @param string|int $key 指定的键名
      * @param bool|null $contain 是否包含该键名的元素
      * @return Ary 新实例
+     * @throws AryKeyTypeException
      */
     public function beforeKey($key, bool $contain = null): self
     {
@@ -875,6 +896,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      * @param string|int $key 指定的键名
      * @param bool|null $contain 是否包含该键名的元素
      * @return Ary 新实例
+     * @throws AryKeyTypeException
      */
     public function afterKey($key, bool $contain = null)
     {
@@ -1386,6 +1408,16 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     public static function accessible($val): bool
     {
         return is_array($val) || $val instanceof ArrayAccess;
+    }
+
+    /**
+     * 判断 $key 是否能作键名
+     * @param mixed $key
+     * @return bool
+     */
+    public static function isValidKey($key): bool
+    {
+        return is_string($key) || is_int($key);
     }
 
     /**
