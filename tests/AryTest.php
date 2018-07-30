@@ -3,7 +3,6 @@ namespace Zane\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Zane\Utils\Ary;
-use Zane\Utils\Exceptions\AryOutOfRangeException;
 
 class AryTest extends TestCase
 {
@@ -455,7 +454,7 @@ class AryTest extends TestCase
         $this->assertEmpty($val);
 
         // throw AryKeyTypeException
-        $val = Ary::new($array)->where(null, '===', 2)->val();
+        Ary::new($array)->where(null, '===', 2)->val();
     }
 
     public function testCountValues()
@@ -497,7 +496,7 @@ class AryTest extends TestCase
         // 数字字符串的键名默认转为数字索引
         $this->assertEquals(array_key_exists('0', $array), $ary->existKey('0'));
         // throw AryKeyTypeException
-        $ary->existKey([]);
+        $ary->existKey(null);
     }
 
     /**
@@ -514,7 +513,7 @@ class AryTest extends TestCase
         // 数字字符串的键名默认转为数字索引
         $this->assertEquals(isset($array['0']), $ary->isSet('0'));
         // throw AryKeyTypeException
-        $ary->isSet([]);
+        $ary->isSet(null);
     }
 
     public function testIsAssoc()
@@ -665,8 +664,8 @@ class AryTest extends TestCase
         $ary = Ary::new($array);
 
         $this->assertEquals([1, 2, 99 => 100], $ary->except('hello', 'hi')->val());
-        $this->assertEquals([1, 2, 99 => 100], $ary->except('none')->val());
-        $this->assertEmpty($ary->except(0, 1, 99)->val());
+        $this->assertEquals($array, $ary->except('none')->val());
+        $this->assertEmpty($ary->val([[1, 2, 99 => 100]])->except(0, 1, 99)->val());
     }
 
     public function testPush()
@@ -1037,13 +1036,12 @@ class AryTest extends TestCase
      */
     public function testAllTrue()
     {
-        $ary = Ary::new([1, 2, 3, 4]);
+        $ary = Ary::new([true, true, true, true]);
 
         $this->assertEquals(true, $ary->allTrue());
-        $this->assertEquals(true, $ary->push([])->allTrue());
-        $this->assertEquals(false, $ary->pop(false)->push('')->allTrue());
-        $this->assertEquals(false, $ary->pop(false)->push(null)->allTrue());
+        $this->assertEquals(true, $ary->push(true)->allTrue());
         $this->assertEquals(false, $ary->pop(false)->push(false)->allTrue());
+        $this->assertEquals(true, $ary->val([])->allTrue());
     }
 
     public function testSum()

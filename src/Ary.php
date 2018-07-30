@@ -87,7 +87,6 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      * @param string $dotKey 符合「点」式语法的键名
      * @param mixed|null $default 默认值
      * @return mixed
-     * @throws AryKeyTypeException
      */
     public function get(string $dotKey = null, $default = null)
     {
@@ -95,7 +94,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
             return $this->val;
         }
 
-        if ($this->existKey($dotKey)) {
+        if (array_key_exists($dotKey, $this->val)) {
             return $this->val[$dotKey];
         }
 
@@ -105,7 +104,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
         foreach ($keys as $key) {
             if (is_array($array) && array_key_exists($key, $array)) {
                 $array = $array[$key];
-            } elseif ($array instanceof static && $array->existKey($key)) {
+            } elseif ($array instanceof static && array_key_exists($key, $array->val())) {
                 $array = $array[$key];
             } else {
                 return $default;
@@ -147,12 +146,11 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      * @see https://laravel.com/docs/5.6/helpers#method-array-has
      * @param string[] $dotKeys 符合「点」式语法的键名
      * @return bool
-     * @throws AryKeyTypeException
      */
     public function has(string ...$dotKeys): bool
     {
         foreach ($dotKeys as $dotKey) {
-            if ($this->existKey($dotKey)) {
+            if (array_key_exists($dotKey, $this->val)) {
                 continue;
             }
 
@@ -162,7 +160,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
             foreach ($keys as $key) {
                 if (is_array($array) && array_key_exists($key, $array)) {
                     $array = $array[$key];
-                } elseif ($array instanceof static && $array->existKey($key)) {
+                } elseif ($array instanceof static && array_key_exists($key, $array->val())) {
                     $array = $array[$key];
                 } else {
                     return false;
@@ -723,15 +721,13 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     /**
      * 移除实例数组中指定键名的值
      * @param array ...$keys 指定键名
-     * @return Ary 原实例
+     * @return Ary 新实例
      */
     public function except(...$keys): self
     {
-        foreach ($keys as $key) {
-            unset($this->val[$key]);
-        }
+        $val = array_diff_key($this->val, array_flip($keys));
 
-        return $this;
+        return static::new($val);
     }
 
     /**
@@ -875,11 +871,10 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      * @param string|int $key 指定的键名
      * @param bool|null $contain 是否包含该键名的元素
      * @return Ary 新实例
-     * @throws AryKeyTypeException
      */
     public function beforeKey($key, bool $contain = null): self
     {
-        if (!$this->existKey($key)) {
+        if (!array_key_exists($key, $this->val)) {
             return static::new([]);
         }
         
@@ -896,11 +891,10 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      * @param string|int $key 指定的键名
      * @param bool|null $contain 是否包含该键名的元素
      * @return Ary 新实例
-     * @throws AryKeyTypeException
      */
     public function afterKey($key, bool $contain = null)
     {
-        if (!$this->existKey($key)) {
+        if (!array_key_exists($key, $this->val)) {
             return static::new([]);
         }
 
@@ -1147,7 +1141,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 确认实例数组中没有等值为 false 的值（注：空数组除外），包括： false null 0 ''
+     * 确认实例数组中的值全为 true，请确保实例数组中只包含：布尔类型的数据，否则将产生未预料的结果
      * @return bool
      */
     public function allTrue(): bool

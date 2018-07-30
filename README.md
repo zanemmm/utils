@@ -9,6 +9,8 @@
 举个栗子：
 
 ``` php
+<?php
+
 // 统计数组中出现次数最多的值
 $data = ['red', 'green', 'blue', 'red', 'red']
 
@@ -27,7 +29,7 @@ echo Ary::new($data)->countValues()->max(); // red
 
 # 项目进度
 
-- [x] Ary 数组类
+- [x] Ary 数组类 2018.7.29
 - [ ] Str 字符串类
 - [ ] Validator 验证器类
 
