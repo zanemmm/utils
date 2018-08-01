@@ -16,18 +16,20 @@ use Zane\Utils\Exceptions\StrEncodingException;
 class Str implements Countable
 {
     protected static $default = [
-        'strPosCaseSensitive'  => true,
-        'strPosReverse'        => false,
-        'searchBefore'         => false,
-        'searchCaseSensitive'  => true,
-        'searchReverse'        => false,
-        'beforeContain'        => false,
-        'afterContain'         => false,
-        'replaceCaseSensitive' => true,
-        'toMd5RawOutput'       => false,
-        'toSha1RawOutput'      => false,
-        'compCaseSensitive'    => true,
-        'natCompCaseSensitive' => true
+        'positionCaseSensitive' => true,
+        'positionReverse'       => false,
+        'searchBefore'          => false,
+        'searchCaseSensitive'   => true,
+        'searchReverse'         => false,
+        'beforeContain'         => false,
+        'afterContain'          => false,
+        'replaceCaseSensitive'  => true,
+        'toMd5RawOutput'        => false,
+        'toSha1RawOutput'       => false,
+        'passwordHashAlgorithm' => PASSWORD_DEFAULT,
+        'passwordHashCost'      => 10,
+        'compCaseSensitive'     => true,
+        'natCompCaseSensitive'  => true
     ];
 
     private $str;
@@ -50,12 +52,29 @@ class Str implements Countable
     }
 
     /**
-     * 回实例中的字符串
+     * 返回实例中的字符串
      * @return string
      */
     public function str(): string
     {
         return $this->str;
+    }
+
+    /**
+     * 设置实例中的字符串
+     * @param string|Str $str 设置的字符串必须以 UTF-8 编码
+     * @return $this 原实例
+     * @throws StrEncodingException
+     */
+    public function set($str)
+    {
+        $str = static::getStr($str);
+        if (!mb_check_encoding($str, 'UTF-8')) {
+            throw new StrEncodingException();
+        }
+        $this->str = $str;
+
+        return $this;
     }
 
     /**
@@ -195,28 +214,33 @@ class Str implements Countable
      * @param bool|null $reverse true 为首次出现的位置，false为最后一次出现的位置
      * @return false|int
      */
-    public function strPos($needle, int $offset = 0, bool $caseSensitive = null, bool $reverse = null)
+    public function position($needle, int $offset = 0, bool $caseSensitive = null, bool $reverse = null)
     {
         $needle = static::getStr($needle);
 
-        $status = static::default($caseSensitive, 'strPosCaseSensitive') << 1
-            | static::default($reverse, 'strPosReverse');
+        $position = false;
+        $status   = static::default($caseSensitive, 'positionCaseSensitive') << 1
+            | static::default($reverse, 'positionReverse');
         switch ($status) {
             // $caseSensitive = false, $reverse = false
             case 0b00:
-                return mb_stripos($this->str, $needle, $offset, 'UTF-8');
+                $position = mb_stripos($this->str, $needle, $offset, 'UTF-8');
+                break;
             // $caseSensitive = false, $reverse = true
             case 0b01:
-                return mb_strripos($this->str, $needle, $offset, 'UTF-8');
+                $position = mb_strripos($this->str, $needle, $offset, 'UTF-8');
+                break;
             // $caseSensitive = true, $reverse = false
             case 0b10:
-                return mb_strpos($this->str, $needle, $offset, 'UTF-8');
+                $position = mb_strpos($this->str, $needle, $offset, 'UTF-8');
+                break;
             // $caseSensitive = true, $reverse = true
             case 0b11:
-                return mb_strrpos($this->str, $needle, $offset, 'UTF-8');
+                $position = mb_strrpos($this->str, $needle, $offset, 'UTF-8');
+                break;
         }
 
-        return false;
+        return $position;
     }
 
     /**
@@ -237,6 +261,7 @@ class Str implements Countable
         $needle = static::getStr($needle);
         $before = static::default($before, 'searchBefore');
 
+        $str    = false;
         $status = static::default($caseSensitive, 'searchCaseSensitive') << 1
             | static::default($reverse, 'searchReverse');
         switch ($status) {
@@ -256,8 +281,6 @@ class Str implements Countable
             case 0b11:
                 $str = mb_strrchr($this->str, $needle, $before, 'UTF-8');
                 break;
-            default:
-                $str = false;
         }
 
         if ($str === false) {
@@ -380,28 +403,44 @@ class Str implements Countable
      * 返回字符串的 MD5 散列值
      * @see http://php.net/manual/zh/function.md5.php
      * @param bool|null $rawOutput
-     * @return Str 新实例
-     * @throws StrEncodingException
+     * @return string
      */
-    public function toMd5(bool $rawOutput = null): self
+    public function toMd5(bool $rawOutput = null): string
     {
         $str = md5($this->str, static::default($rawOutput, 'toMd5RawOutput'));
 
-        return static::new($str);
+        return $str;
     }
 
     /**
      * 返回字符串的 sha1 散列值
      * @see http://php.net/manual/zh/function.sha1.php
      * @param bool|null $rawOutput
-     * @return Str 新实例
-     * @throws StrEncodingException
+     * @return string
      */
-    public function toSha1(bool $rawOutput = null): self
+    public function toSha1(bool $rawOutput = null): string
     {
         $str = sha1($this->str, static::default($rawOutput, 'toSha1RawOutput'));
 
-        return static::new($str);
+        return $str;
+    }
+
+    /**
+     * 创建密码的散列
+     * @see http://php.net/manual/zh/function.password-hash.php
+     * @param int|null $algorithm
+     * @param int|null $cost
+     * @return Str
+     * @throws StrEncodingException
+     */
+    public function passwordHash(int $algorithm = null, int $cost = null)
+    {
+        $algorithm = static::default($algorithm, 'passwordHashAlgorithm');
+        $cost      = static::default($cost, 'passwordHashCost');
+
+        $hash = password_hash($this->str, $algorithm, ['cost' => $cost]);
+
+        return static::new($hash);
     }
 
     /**
@@ -470,23 +509,27 @@ class Str implements Countable
     {
         $compStr = static::getStr($compStr);
         $status  = static::default($caseSensitive, 'compCaseSensitive') << 1 | !is_null($num);
-
+        $diff    = false;
         switch ($status) {
             // $caseSensitive = false, $num = null
             case 0b00:
-                return strcasecmp($this->str, $compStr);
+                $diff = strcasecmp($this->str, $compStr);
+                break;
             // $caseSensitive = false, $num != null
             case 0b01:
-                return strncasecmp($this->str, $compStr, $num);
+                $diff = strncasecmp($this->str, $compStr, $num);
+                break;
             // $caseSensitive = true, $num = null
             case 0b10:
-                return strcmp($this->str, $compStr);
+                $diff = strcmp($this->str, $compStr);
+                break;
             // $caseSensitive = true, $num != null
             case 0b11:
-                return strncmp($this->str, $compStr, $num);
+                $diff = strncmp($this->str, $compStr, $num);
+                break;
         }
 
-        return strcmp($this->str, $compStr);
+        return $diff;
     }
 
     /**
@@ -531,6 +574,34 @@ class Str implements Countable
         }
 
         return static::new($reverseStr);
+    }
+
+    /**
+     * 字符串转为字符数组
+     * @return array
+     */
+    public function toArray(): array
+    {
+        $str   = $this->str;
+        $len   = mb_strlen($str);
+        $array = [];
+
+        while ($len) {
+            $array[] = mb_substr($str, 0, 1, 'UTF-8');
+            $str = mb_substr($str, 1, $len, 'UTF-8');
+            $len = mb_strlen($str);
+        }
+
+        return $array;
+    }
+
+    /**
+     * 字符串转为 Ary 数组
+     * @return Ary
+     */
+    public function toAry(): Ary
+    {
+        return Ary::new($this->toArray());
     }
 
     /**
@@ -609,23 +680,18 @@ class Str implements Countable
     }
 
     /**
-     * 若传入两个参数则第一个参数为 null 时，则返回 $default 数组中以 $second 为键名的值
-     * 若第一个参数不为 null 则返回第一个参数的值
-     * 若只传入一个参数则直接返回 $default 数组中以 $first 为键名的值
-     * @param null $first
-     * @param string|null $second
+     * 若 $val 不为 null 则返回 $val
+     * 若 $val 为 null 则直接返回 $default 数组中以 $key 为键名的值
+     * @param mixed|null $val
+     * @param string $key
      * @return mixed|null
      */
-    protected static function default($first, string $second = null)
+    protected static function default($val, string $key = null)
     {
-        if (func_num_args() < 2) {
-            return static::$default[$first] ?? null;
+        if (is_null($val)) {
+            return static::$default[$key] ?? null;
         }
 
-        if (is_null($first)) {
-            return static::$default[$second] ?? null;
-        }
-
-        return $first;
+        return $val;
     }
 }

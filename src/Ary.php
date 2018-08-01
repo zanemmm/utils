@@ -1415,7 +1415,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 若传入两个参数则第一个参数为 null 时，则返回 $default 数组中以 $second 为键名的值
+     * 若传入两个参数，第一个参数为 null 时，则返回 $default 数组中以 $second 为键名的值
      * 若第一个参数不为 null 则返回第一个参数的值
      * 若只传入一个参数则直接返回 $default 数组中以 $first 为键名的值
      * @param null $first
