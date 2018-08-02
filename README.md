@@ -30,7 +30,7 @@ echo Ary::new($data)->countValues()->max(); // red
 # 项目进度
 
 - [x] Ary 数组类 2018.7.29
-- [ ] Str 字符串类
+- [x] Str 字符串类 2018.8.1
 - [ ] Validator 验证器类
 
 # 贡献代码
@@ -39,7 +39,7 @@ echo Ary::new($data)->countValues()->max(); // red
 
 测试覆盖率 >= 90%
 
-欢迎各位小伙伴提 issue 和 pr，我现在立个 :triangular_flag_on_post: 一定要把这个项目坚持下去！
+欢迎各位小伙伴提 issue 和 pr，立个 :triangular_flag_on_post: 一定要把这个项目坚持下去！
 
 # 感谢
 
