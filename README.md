@@ -31,7 +31,7 @@ echo Ary::new($data)->countValues()->max(); // red
 
 - [x] Ary 数组类 2018.7.29
 - [x] Str 字符串类 2018.8.1
-- [ ] Validator 验证器类
+- [x] Validator 验证器类 2018.8.3
 
 # 贡献代码
 

@@ -17,7 +17,7 @@ class Validator
     protected static $validators = [];
 
     /**
-     * 验证字符为 '1'、'true'、'on'、'yes' 之一，不区分大小写
+     * 验证字符为 '1'、'true'、'on'、'yes' 之一，不区分大小写，忽略字符串左右的空白符
      * @param string $input
      * @return bool
      */
@@ -27,7 +27,7 @@ class Validator
     }
 
     /**
-     * 验证字符为 '1'、'true'、'on'、'yes'、'0'、'false'、'off'、'no' 之一，不区分大小写
+     * 验证字符为 '1'、'true'、'on'、'yes'、'0'、'false'、'off'、'no' 之一，不区分大小写，忽略字符串左右的空白符
      * @param string $input
      * @return bool
      */
@@ -129,11 +129,11 @@ class Validator
     /**
      * 验证字符串为 int 类型并且大于等于 $min，注意：整型的范围
      * 数字左右的空白符，如：空格，Tab 不会影响验证
-     * @param $input
+     * @param string $input
      * @param int $min
      * @return bool
      */
-    public static function intMin($input, int $min): bool
+    public static function intMin(string $input, int $min): bool
     {
         $options = ['options' => ['min_range' => $min]];
         $int = filter_var($input, FILTER_VALIDATE_INT, $options);
@@ -147,12 +147,12 @@ class Validator
     /**
      * 验证字符串为 int 类型，大于等于 $min，小于等于 $max，注意：整型的范围
      * 数字左右的空白符，如：空格，Tab 不会影响验证
-     * @param $input
+     * @param string $input
      * @param int $min
      * @param int $max
      * @return bool
      */
-    public static function intBetween($input, int $min, int $max): bool
+    public static function intBetween(string $input, int $min, int $max): bool
     {
         $options = [
             'options' => [
@@ -261,7 +261,7 @@ class Validator
         if ($ip !== false) {
             return true;
         }
-        return true;
+        return false;
     }
 
     /**
@@ -276,7 +276,7 @@ class Validator
         if ($ip !== false) {
             return true;
         }
-        return true;
+        return false;
     }
 
     /**
@@ -284,30 +284,28 @@ class Validator
      * @param string $input
      * @return bool
      */
-    public static function ipv6($input): bool
+    public static function ipv6(string $input): bool
     {
         $ip = filter_var($input, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6);
 
         if ($ip !== false) {
             return true;
         }
-        return true;
+        return false;
     }
 
     /**
-     * 验证字符串为域名，支持中文域名
+     * 验证字符串为域名（域名最后不能加 . 号），不支持中文域名
      * @param string $input
-     * @param  bool $idn 兼容特殊字符域名，如：中文，默认为 false 即只支持验证英文域名
      * @return bool
      */
-    public static function domain(string $input, bool $idn = false)
+    public static function domain(string $input)
     {
-        $domain = $input;
-        if ($idn) {
-            $domain = idn_to_ascii($input);
-        }
-
-        if (preg_match("/[a-zA-Z0-9][-a-zA-Z0-9]{0,62}(.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})*\.[a-zA-Z]{2,62}.?/", $domain)) {
+        if (preg_match(
+            "/^([a-zA-Z0-9][-a-zA-Z0-9]{0,61}[a-zA-Z0-9]|[a-zA-Z0-9])"
+            . "(.([a-zA-Z0-9][-a-zA-Z0-9]{0,61}[a-zA-Z0-9]|[a-zA-Z0-9]))*\.[a-zA-Z]{2,62}$/",
+            $input
+        )) {
             return true;
         }
 
@@ -323,7 +321,7 @@ class Validator
     public static function activeDomain(string $input): bool
     {
         if (static::domain($input)) {
-            return checkdnsrr(idn_to_ascii($input), 'ANY');
+            return checkdnsrr($input, 'ANY');
         }
 
         return false;
@@ -332,41 +330,42 @@ class Validator
     /**
      * 验证字符串为合法 URL，默认允许任何协议
      * @param string $input
-     * @param string $scheme 协议名称如： http、https
+     * @param string|string[] $schemes 协议名称如： http、https，可传递允许协议名称数组
      * @return bool
      */
-    public static function url(string $input, string $scheme = null): bool
+    public static function url(string $input, $schemes = null): bool
     {
         $url = filter_var($input, FILTER_VALIDATE_URL);
         if ($url === false) {
             return false;
         }
 
-        if (!is_null($scheme)) {
-            $scheme .= '://';
-            $pos = strpos($input, $scheme);
-            if ($pos !== 0) {
-                return false;
+        if (!is_null($schemes)) {
+            if (!is_array($schemes)) {
+                $schemes = [$schemes];
             }
+            foreach ($schemes as $scheme) {
+                $scheme .= '://';
+                $pos = strpos($input, $scheme);
+                // 找到对应协议
+                if ($pos === 0) {
+                    return true;
+                }
+            }
+            // 没有找到对应协议
+            return false;
         }
+
         return true;
     }
 
     /**
-     * 验证字符串为邮箱，支持中文域名但不支持中文用户名
+     * 验证字符串为邮箱，不支持支持中文域名和中文用户名
      * @param string $input
      * @return bool
      */
     public static function email(string $input): bool
     {
-        $array = explode('@', $input);
-        if (count($array) !== 2) {
-            return false;
-        }
-        // 处理非英文域名
-        $array[1] = idn_to_ascii($array[1]);
-        $input = implode('@', $array);
-
         $email = filter_var($input, FILTER_VALIDATE_EMAIL);
         if ($email !== false) {
             return true;
@@ -395,7 +394,7 @@ class Validator
      */
     public static function IDCard(string $input): bool
     {
-        if (strlen($input) !== 18 || !static::num($input)) {
+        if (strlen($input) !== 18 || !static::num(substr($input, 0, 17))) {
             return false;
         }
 
@@ -418,23 +417,6 @@ class Validator
     }
 
     /**
-     * 验证国内身份证号码且年龄大于等于 $minAge
-     * @param string $input
-     * @param int $minAge
-     * @return bool
-     */
-    public static function IDCardMinAge(string $input, int $minAge): bool
-    {
-        if (static::IDCard($input)) {
-            $year = date('Y') - substr($input, 6, 4);
-            $monthDay = date('md') - substr($input, 10, 4);
-            return ($year > $minAge || $year == $minAge && $monthDay >= 0) ? true : false;
-        }
-
-        return false;
-    }
-
-    /**
      * 验证国内身份证号码且年龄小于等于 $maxAge
      * @param string $input
      * @param int $maxAge
@@ -446,6 +428,23 @@ class Validator
             $year = date('Y') - substr($input, 6, 4);
             $monthDay = date('md') - substr($input, 10, 4);
             return ($year < $maxAge || $year == $maxAge && $monthDay <= 0) ? true : false;
+        }
+
+        return false;
+    }
+
+    /**
+     * 验证国内身份证号码且年龄大于等于 $minAge
+     * @param string $input
+     * @param int $minAge
+     * @return bool
+     */
+    public static function IDCardMinAge(string $input, int $minAge): bool
+    {
+        if (static::IDCard($input)) {
+            $year = date('Y') - substr($input, 6, 4);
+            $monthDay = date('md') - substr($input, 10, 4);
+            return ($year > $minAge || $year == $minAge && $monthDay >= 0) ? true : false;
         }
 
         return false;
