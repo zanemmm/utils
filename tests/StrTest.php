@@ -1,4 +1,5 @@
 <?php
+
 namespace Zane\Tests;
 
 use PHPUnit\Framework\TestCase;
@@ -13,7 +14,7 @@ class StrTest extends TestCase
      */
     public function testNew()
     {
-        $gbk = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'gbk.txt');
+        $gbk = file_get_contents(__DIR__.DIRECTORY_SEPARATOR.'gbk.txt');
         $str = Str::convert($gbk, 'GBK');
         $this->assertEquals('PHP 是世界上最好的语言', $str);
 
@@ -35,18 +36,19 @@ class StrTest extends TestCase
 
     /**
      * @expectedException \Zane\Utils\Exceptions\StrEncodingException
+     *
      * @throws \Zane\Utils\Exceptions\StrEncodingException
      */
     public function testSet()
     {
         $str = Str::new('PHP 是世界上最好的语言');
-        $str->set("你好世界");
+        $str->set('你好世界');
         $this->assertEquals('你好世界', $str->str());
 
-        $str2 = Str::new("世界你好");
+        $str2 = Str::new('世界你好');
         $this->assertEquals('世界你好', $str->set($str2)->str());
 
-        $gbk = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'gbk.txt');
+        $gbk = file_get_contents(__DIR__.DIRECTORY_SEPARATOR.'gbk.txt');
         $str2->set($gbk);
     }
 
@@ -269,7 +271,7 @@ class StrTest extends TestCase
      */
     public function testPasswordHash()
     {
-        $str  = Str::new('你好世界');
+        $str = Str::new('你好世界');
 
         $this->assertTrue(password_verify('你好世界', $str->passwordHash()));
     }
@@ -279,10 +281,10 @@ class StrTest extends TestCase
      */
     public function testTrim()
     {
-        $str  = Str::new(' 你好世界 ');
+        $str = Str::new(' 你好世界 ');
         $this->assertEquals('你好世界', $str->trim());
 
-        $str  = Str::new('#你好世界#');
+        $str = Str::new('#你好世界#');
         $this->assertEquals('你好世界', $str->trim('#'));
     }
 
@@ -291,10 +293,10 @@ class StrTest extends TestCase
      */
     public function testLtrim()
     {
-        $str  = Str::new(' 你好世界 ');
+        $str = Str::new(' 你好世界 ');
         $this->assertEquals('你好世界 ', $str->ltrim());
 
-        $str  = Str::new('#你好世界#');
+        $str = Str::new('#你好世界#');
         $this->assertEquals('你好世界#', $str->ltrim('#'));
     }
 
@@ -303,10 +305,10 @@ class StrTest extends TestCase
      */
     public function testRtrim()
     {
-        $str  = Str::new(' 你好世界 ');
+        $str = Str::new(' 你好世界 ');
         $this->assertEquals(' 你好世界', $str->rtrim());
 
-        $str  = Str::new('#你好世界#');
+        $str = Str::new('#你好世界#');
         $this->assertEquals('#你好世界', $str->rtrim('#'));
     }
 
