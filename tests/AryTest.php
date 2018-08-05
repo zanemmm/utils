@@ -1,4 +1,5 @@
 <?php
+
 namespace Zane\Tests;
 
 use PHPUnit\Framework\TestCase;
@@ -85,7 +86,7 @@ class AryTest extends TestCase
         $this->assertEquals('utils', $ary->get('hello.world'));
         $this->assertEquals(['hello' => Ary::new(['world' => 'utils'])], $ary->val());
     }
-    
+
     public function testHas()
     {
         $array = ['products.desk' => ['price' => 100]];
@@ -129,12 +130,12 @@ class AryTest extends TestCase
         $a = [
             ['start' => 1, 2, 3],
             [4, 5, 6],
-            [7, 8, 'end' => 9]
+            [7, 8, 'end' => 9],
         ];
         $b = [
             Ary::new(['start' => 1, 2, 3]),
             Ary::new([4, 5, 6]),
-            Ary::new([7, 8, 'end' => 9])
+            Ary::new([7, 8, 'end' => 9]),
         ];
         $ary = Ary::new($b);
 
@@ -148,14 +149,12 @@ class AryTest extends TestCase
 
         $this->assertEquals($c, $ary->toArray(true));
 
-
         $e = ['hello' => ['world' => Ary::new(['utils'])]];
         $f = ['hello' => ['world' => ['utils']]];
         $ary = Ary::new($e);
 
         $this->assertEquals($f, $ary->toArray(true));
     }
-
 
     public function testValues()
     {
@@ -307,7 +306,7 @@ class AryTest extends TestCase
         $array = [
             ['id' => 1, 'name' => 'a', 'val' => 'x'],
             ['id' => 2, 'name' => 'a', 'val' => 'y'],
-            ['id' => 3, 'name' => 'a', 'val' => 'z']
+            ['id' => 3, 'name' => 'a', 'val' => 'z'],
         ];
         $ary = Ary::new($array);
 
@@ -318,7 +317,7 @@ class AryTest extends TestCase
         $AryArray = [
             Ary::new(['id' => 1, 'name' => 'a', 'val' => 'x']),
             Ary::new(['id' => 2, 'name' => 'b', 'val' => 'y']),
-            Ary::new(['id' => 3, 'name' => 'c', 'val' => 'z'])
+            Ary::new(['id' => 3, 'name' => 'c', 'val' => 'z']),
         ];
         $ary = Ary::new($AryArray);
 
@@ -343,17 +342,17 @@ class AryTest extends TestCase
         $array = [
             ['id' => 1, 'name' => 'a', 'val' => 'x'],
             ['id' => 2, 'name' => 'b', 'val' => 'y'],
-            ['id' => 3, 'name' => 'c', 'val' => 'z']
+            ['id' => 3, 'name' => 'c', 'val' => 'z'],
         ];
         $AryArray = [
             Ary::new(['id' => 1, 'name' => 'a', 'val' => 'x']),
             Ary::new(['id' => 2, 'name' => 'b', 'val' => 'y']),
-            Ary::new(['id' => 3, 'name' => 'c', 'val' => 'z'])
+            Ary::new(['id' => 3, 'name' => 'c', 'val' => 'z']),
         ];
         $data = [
             1 => ['name' => 'a'],
             2 => ['name' => 'b'],
-            3 => ['name' => 'c']
+            3 => ['name' => 'c'],
         ];
         $val = Ary::new($array)->select(['name'], 'id')->val();
         $this->assertEquals($data, $val);
@@ -363,7 +362,7 @@ class AryTest extends TestCase
         $data = [
             1 => ['name' => 'a', 'val' => 'x'],
             2 => ['name' => 'b', 'val' => 'y'],
-            3 => ['name' => 'c', 'val' => 'z']
+            3 => ['name' => 'c', 'val' => 'z'],
         ];
         $val = Ary::new($array)->select(['name', 'val'], 'id')->val();
         $this->assertEquals($data, $val);
@@ -373,7 +372,7 @@ class AryTest extends TestCase
         $data = [
             0 => ['name' => 'a', 'val' => 'x'],
             1 => ['name' => 'b', 'val' => 'y'],
-            2 => ['name' => 'c', 'val' => 'z']
+            2 => ['name' => 'c', 'val' => 'z'],
         ];
         $val = Ary::new($array)->select(['name', 'val'])->val();
         $this->assertEquals($data, $val);
@@ -394,22 +393,22 @@ class AryTest extends TestCase
         $array = [
             ['id' => 1, 'name' => 'a', 'val' => 'x'],
             ['id' => 2, 'name' => 'b', 'val' => 'y'],
-            ['id' => 3, 'name' => 'c', 'val' => 'z']
+            ['id' => 3, 'name' => 'c', 'val' => 'z'],
         ];
         $AryArray = [
             Ary::new(['id' => 1, 'name' => 'a', 'val' => 'x']),
             Ary::new(['id' => 2, 'name' => 'b', 'val' => 'y']),
-            Ary::new(['id' => 3, 'name' => 'c', 'val' => 'z'])
+            Ary::new(['id' => 3, 'name' => 'c', 'val' => 'z']),
         ];
         $data = [
-            2 => ['id' => 3, 'name' => 'c', 'val' => 'z']
+            2 => ['id' => 3, 'name' => 'c', 'val' => 'z'],
         ];
         $val = Ary::new($array)->where('id', '>', 2)->val();
         $this->assertEquals($data, $val);
 
         $data = [
             1 => ['id' => 2, 'name' => 'b', 'val' => 'y'],
-            2 => ['id' => 3, 'name' => 'c', 'val' => 'z']
+            2 => ['id' => 3, 'name' => 'c', 'val' => 'z'],
         ];
         $val = Ary::new($array)->where('id', '>=', 2)->val();
         $this->assertEquals($data, $val);
@@ -553,7 +552,7 @@ class AryTest extends TestCase
             return strlen($x) <=> strlen($y);
         };
         $array = ['longLong', 'long', 'float', 'int'];
-        $ary   = Ary::new($array);
+        $ary = Ary::new($array);
 
         uasort($array, $fn);
         $ary->userSort($fn, true);
@@ -572,7 +571,7 @@ class AryTest extends TestCase
         natsort($array);
         $ary->natSort(true);
         $this->assertEquals($array, $ary->val());
-        
+
         natcasesort($array);
         $ary->natSort(false);
         $this->assertEquals($array, $ary->val());
@@ -928,9 +927,9 @@ class AryTest extends TestCase
         $str2 = '';
         $fn = function ($val, $key, $isAry) use (&$str1, &$str2) {
             if ($isAry) {
-                $str2 .= $key . '=>' . $val . PHP_EOL;
+                $str2 .= $key.'=>'.$val.PHP_EOL;
             } else {
-                $str1 .= $key . '=>' . $val . PHP_EOL;
+                $str1 .= $key.'=>'.$val.PHP_EOL;
             }
         };
         $array = ['hello' => 'world', 'pi' => '0php.net', 1, 2, 3];
@@ -976,6 +975,7 @@ class AryTest extends TestCase
     {
         $fn = function ($carry, $item) {
             $carry += $item;
+
             return $carry;
         };
         $array = [1, 2, 3, 4, 5, 6];
@@ -1098,9 +1098,9 @@ class AryTest extends TestCase
     {
         $ary = Ary::new([
             'name'  => 'zane',
-            'email' => 'pi@0php.net'
+            'email' => 'pi@0php.net',
         ]);
-        $json = <<<EOT
+        $json = <<<'EOT'
 {
     "name": "zane",
     "email": "pi@0php.net"
@@ -1111,10 +1111,10 @@ EOT;
 
         // 测试递归
         $ary2 = Ary::new([
-            'id' => 1,
-            'profile' => $ary
+            'id'      => 1,
+            'profile' => $ary,
         ]);
-        $json2 = <<<EOT
+        $json2 = <<<'EOT'
 {
     "id": 1,
     "profile": {
@@ -1159,7 +1159,7 @@ EOT;
         $d = Ary::newFill(99, 3, 1)->val();
         $this->assertEquals($c, $d);
     }
-    
+
     public function testIteratorAggregate()
     {
         $a = ['a' => 0, 'b' => 1, 'c' => 2, 3, 4, 5];

@@ -1,13 +1,14 @@
 <?php
 /**
- * Str 类
+ * Str 类.
  *
  * 提供各种方便的方法操作字符串
  *
- * @package    utils
  * @license    MIT
+ *
  * @link       https://github.com/zanemmm/utils
  */
+
 namespace Zane\Utils;
 
 use Countable;
@@ -29,15 +30,17 @@ class Str implements Countable
         'passwordHashAlgorithm' => PASSWORD_DEFAULT,
         'passwordHashCost'      => 10,
         'compCaseSensitive'     => true,
-        'natCompCaseSensitive'  => true
+        'natCompCaseSensitive'  => true,
     ];
 
     private $str;
 
     /**
      * Str constructor.
-     * @param string $str
+     *
+     * @param string      $str
      * @param string|null $fromEncoding
+     *
      * @throws StrEncodingException
      */
     public function __construct(string $str, string $fromEncoding = null)
@@ -52,7 +55,8 @@ class Str implements Countable
     }
 
     /**
-     * 返回实例中的字符串
+     * 返回实例中的字符串.
+     *
      * @return string
      */
     public function str(): string
@@ -61,10 +65,13 @@ class Str implements Countable
     }
 
     /**
-     * 设置实例中的字符串
+     * 设置实例中的字符串.
+     *
      * @param string|Str $str 设置的字符串必须以 UTF-8 编码
-     * @return $this 原实例
+     *
      * @throws StrEncodingException
+     *
+     * @return $this 原实例
      */
     public function set($str)
     {
@@ -78,10 +85,13 @@ class Str implements Countable
     }
 
     /**
-     * 字符串转大写
+     * 字符串转大写.
+     *
      * @see http://php.net/manual/zh/function.mb-convert-case.php
-     * @return Str 新实例
+     *
      * @throws StrEncodingException
+     *
+     * @return Str 新实例
      */
     public function toUpperCase(): self
     {
@@ -91,10 +101,13 @@ class Str implements Countable
     }
 
     /**
-     * 字符串转小写
+     * 字符串转小写.
+     *
      * @see http://php.net/manual/zh/function.mb-convert-case.php
-     * @return Str 新实例
+     *
      * @throws StrEncodingException
+     *
+     * @return Str 新实例
      */
     public function toLowerCase(): self
     {
@@ -104,10 +117,13 @@ class Str implements Countable
     }
 
     /**
-     * 字符串单词首字母转大写
+     * 字符串单词首字母转大写.
+     *
      * @see http://php.net/manual/zh/function.mb-convert-case.php
-     * @return Str 新实例
+     *
      * @throws StrEncodingException
+     *
+     * @return Str 新实例
      */
     public function toTitleCase(): self
     {
@@ -117,10 +133,13 @@ class Str implements Countable
     }
 
     /**
-     * 使用一个字符串分割另一个字符串
+     * 使用一个字符串分割另一个字符串.
+     *
      * @see http://php.net/manual/zh/function.explode.php
+     *
      * @param string|Str $delimiter 边界上的分隔字符
-     * @param int|null $limit 最多分割为 limit 个元素
+     * @param int|null   $limit     最多分割为 limit 个元素
+     *
      * @return Ary
      */
     public function explode($delimiter, int $limit = null): Ary
@@ -137,10 +156,13 @@ class Str implements Countable
     }
 
     /**
-     * 使用正则表达式分割多字节字符串
+     * 使用正则表达式分割多字节字符串.
+     *
      * @see http://php.net/manual/zh/function.mb-split.php
+     *
      * @param string|Str $pattern 正则表达式
-     * @param int|null $limit 最多分割为 limit 个元素
+     * @param int|null   $limit   最多分割为 limit 个元素
+     *
      * @return Ary
      */
     public function split($pattern, int $limit = null): Ary
@@ -157,12 +179,16 @@ class Str implements Countable
     }
 
     /**
-     * 获取部分字符串
+     * 获取部分字符串.
+     *
      * @see http://php.net/manual/zh/function.mb-substr.php
-     * @param int $start 开始字符数
-     * @param int|null $len 子串长度
-     * @return Str 新实例
+     *
+     * @param int      $start 开始字符数
+     * @param int|null $len   子串长度
+     *
      * @throws StrEncodingException
+     *
+     * @return Str 新实例
      */
     public function substring(int $start, int $len = null): self
     {
@@ -172,9 +198,12 @@ class Str implements Countable
     }
 
     /**
-     * 子字符串出现次数
+     * 子字符串出现次数.
+     *
      * @see http://php.net/manual/zh/function.mb-substr-count.php
+     *
      * @param string|Str $needle 子字符串
+     *
      * @return int
      */
     public function substringCount($needle): int
@@ -185,11 +214,14 @@ class Str implements Countable
     }
 
     /**
-     * 以指定长度截断字符串
-     * @param int $len 指定长度
+     * 以指定长度截断字符串.
+     *
+     * @param int             $len    指定长度
      * @param string|Str|null $marker 截断字符串后连接的字符串，比如可以为：“……”
-     * @return Str 新实例
+     *
      * @throws StrEncodingException
+     *
+     * @return Str 新实例
      */
     public function truncate(int $len, $marker = null): self
     {
@@ -197,21 +229,24 @@ class Str implements Countable
             return static::new($this->str);
         }
 
-        $str = mb_substr($this->str, 0, $len, 'UTF-8') . static::getStr($marker);
+        $str = mb_substr($this->str, 0, $len, 'UTF-8').static::getStr($marker);
 
         return static::new($str);
     }
 
     /**
-     * 查找字符串在另一个字符串中出现的位置
+     * 查找字符串在另一个字符串中出现的位置.
+     *
      * @see http://php.net/manual/zh/function.mb-strpos.php
      * @see http://php.net/manual/zh/function.mb-stripos.php
      * @see http://php.net/manual/zh/function.mb-strrpos.php
      * @see http://php.net/manual/zh/function.mb-strripos.php
-     * @param string|Str $needle 要查找的字符串
-     * @param int $offset 开始查找偏移量
-     * @param bool|null $caseSensitive 大小写敏感
-     * @param bool|null $reverse true 为首次出现的位置，false为最后一次出现的位置
+     *
+     * @param string|Str $needle        要查找的字符串
+     * @param int        $offset        开始查找偏移量
+     * @param bool|null  $caseSensitive 大小写敏感
+     * @param bool|null  $reverse       true 为首次出现的位置，false为最后一次出现的位置
+     *
      * @return false|int
      */
     public function position($needle, int $offset = 0, bool $caseSensitive = null, bool $reverse = null)
@@ -219,7 +254,7 @@ class Str implements Countable
         $needle = static::getStr($needle);
 
         $position = false;
-        $status   = static::default($caseSensitive, 'positionCaseSensitive') << 1
+        $status = static::default($caseSensitive, 'positionCaseSensitive') << 1
             | static::default($reverse, 'positionReverse');
         switch ($status) {
             // $caseSensitive = false, $reverse = false
@@ -244,24 +279,28 @@ class Str implements Countable
     }
 
     /**
-     * 查找并返回子串
+     * 查找并返回子串.
+     *
      * @see http://php.net/manual/zh/function.mb-strstr.php
      * @see http://php.net/manual/zh/function.mb-stristr.php
      * @see http://php.net/manual/zh/function.mb-strrchr.php
      * @see http://php.net/manual/zh/function.mb-strrichr.php
-     * @param string|Str $needle 要查找的字符串
-     * @param bool|null $before 返回 $needle 之前的字符串
-     * @param bool|null $caseSensitive 大小写敏感
-     * @param bool|null $reverse true 为首次出现的位置，false为最后一次出现的位置
-     * @return Str|false 新实例或 false
+     *
+     * @param string|Str $needle        要查找的字符串
+     * @param bool|null  $before        返回 $needle 之前的字符串
+     * @param bool|null  $caseSensitive 大小写敏感
+     * @param bool|null  $reverse       true 为首次出现的位置，false为最后一次出现的位置
+     *
      * @throws StrEncodingException
+     *
+     * @return Str|false 新实例或 false
      */
     public function search($needle, bool $before = null, bool $caseSensitive = null, bool $reverse = null)
     {
         $needle = static::getStr($needle);
         $before = static::default($before, 'searchBefore');
 
-        $str    = false;
+        $str = false;
         $status = static::default($caseSensitive, 'searchCaseSensitive') << 1
             | static::default($reverse, 'searchReverse');
         switch ($status) {
@@ -291,11 +330,14 @@ class Str implements Countable
     }
 
     /**
-     * 返回子字符串之前的字符串
-     * @param string|Str $needle 指定的字符串
-     * @param bool|null $contain 包含指定的字符串
-     * @return Str|false 新实例或 false
+     * 返回子字符串之前的字符串.
+     *
+     * @param string|Str $needle  指定的字符串
+     * @param bool|null  $contain 包含指定的字符串
+     *
      * @throws StrEncodingException
+     *
+     * @return Str|false 新实例或 false
      */
     public function before($needle, bool $contain = null)
     {
@@ -320,11 +362,14 @@ class Str implements Countable
     }
 
     /**
-     * 返回子字符串之后的字符串
-     * @param string|Str $needle 指定的字符串
-     * @param bool|null $contain 包含指定的字符串
-     * @return Str|false 新实例或 false
+     * 返回子字符串之后的字符串.
+     *
+     * @param string|Str $needle  指定的字符串
+     * @param bool|null  $contain 包含指定的字符串
+     *
      * @throws StrEncodingException
+     *
+     * @return Str|false 新实例或 false
      */
     public function after($needle, bool $contain = null)
     {
@@ -343,12 +388,16 @@ class Str implements Countable
     }
 
     /**
-     * 重复一个字符串
+     * 重复一个字符串.
+     *
      * @see http://php.net/manual/zh/function.str-repeat.php
+     *
      * @param int $num 重复次数
      * @param string|Str 分隔符
-     * @return Str 新实例
+     *
      * @throws StrEncodingException
+     *
+     * @return Str 新实例
      */
     public function repeat(int $num, $separator = null): self
     {
@@ -363,18 +412,22 @@ class Str implements Countable
     }
 
     /**
-     * 子字符串替换
+     * 子字符串替换.
+     *
      * @see http://php.net/manual/zh/function.str-replace.php
      * @see http://php.net/manual/zh/function.str-ireplace.php
+     *
      * @param string|Str $search
      * @param string|Str $replace
-     * @param bool|null $caseSensitive
-     * @return Str 新实例
+     * @param bool|null  $caseSensitive
+     *
      * @throws StrEncodingException
+     *
+     * @return Str 新实例
      */
     public function replace($search, $replace, bool $caseSensitive = null): self
     {
-        $search  = static::getStr($search);
+        $search = static::getStr($search);
         $replace = static::getStr($replace);
 
         if (static::default($caseSensitive, 'replaceCaseSensitive')) {
@@ -388,9 +441,12 @@ class Str implements Countable
 
     /**
      * 转为 base64 编码
+     *
      * @see http://php.net/manual/zh/function.base64-encode.php
-     * @return Str 新实例
+     *
      * @throws StrEncodingException
+     *
+     * @return Str 新实例
      */
     public function toBase64(): self
     {
@@ -401,8 +457,11 @@ class Str implements Countable
 
     /**
      * 返回字符串的 MD5 散列值
+     *
      * @see http://php.net/manual/zh/function.md5.php
+     *
      * @param bool|null $rawOutput
+     *
      * @return string
      */
     public function toMd5(bool $rawOutput = null): string
@@ -414,8 +473,11 @@ class Str implements Countable
 
     /**
      * 返回字符串的 sha1 散列值
+     *
      * @see http://php.net/manual/zh/function.sha1.php
+     *
      * @param bool|null $rawOutput
+     *
      * @return string
      */
     public function toSha1(bool $rawOutput = null): string
@@ -426,17 +488,21 @@ class Str implements Countable
     }
 
     /**
-     * 创建密码的散列
+     * 创建密码的散列.
+     *
      * @see http://php.net/manual/zh/function.password-hash.php
+     *
      * @param int|null $algorithm
      * @param int|null $cost
-     * @return Str
+     *
      * @throws StrEncodingException
+     *
+     * @return Str
      */
     public function passwordHash(int $algorithm = null, int $cost = null)
     {
         $algorithm = static::default($algorithm, 'passwordHashAlgorithm');
-        $cost      = static::default($cost, 'passwordHashCost');
+        $cost = static::default($cost, 'passwordHashCost');
 
         $hash = password_hash($this->str, $algorithm, ['cost' => $cost]);
 
@@ -444,11 +510,15 @@ class Str implements Countable
     }
 
     /**
-     * 去除字符串首尾处的空白字符（或者其他字符）
+     * 去除字符串首尾处的空白字符（或者其他字符）.
+     *
      * @see http://php.net/manual/zh/function.trim.php
+     *
      * @param string|Str|null $characterMask
-     * @return Str 新实例
+     *
      * @throws StrEncodingException
+     *
+     * @return Str 新实例
      */
     public function trim($characterMask = null): self
     {
@@ -457,15 +527,20 @@ class Str implements Countable
         }
 
         $characterMask = static::getStr($characterMask);
+
         return static::new(trim($this->str, $characterMask));
     }
 
     /**
-     * 删除字符串开头的空白字符（或其他字符）
+     * 删除字符串开头的空白字符（或其他字符）.
+     *
      * @see http://php.net/manual/zh/function.ltrim.php
+     *
      * @param string|Str|null $characterMask
-     * @return Str 新实例
+     *
      * @throws StrEncodingException
+     *
+     * @return Str 新实例
      */
     public function ltrim($characterMask = null): self
     {
@@ -474,15 +549,20 @@ class Str implements Countable
         }
 
         $characterMask = static::getStr($characterMask);
+
         return static::new(ltrim($this->str, $characterMask));
     }
 
     /**
-     * 删除字符串开头的空白字符（或其他字符）
+     * 删除字符串开头的空白字符（或其他字符）.
+     *
      * @see http://php.net/manual/zh/function.rtrim.php
+     *
      * @param string|Str|null $characterMask
-     * @return Str 新实例
+     *
      * @throws StrEncodingException
+     *
+     * @return Str 新实例
      */
     public function rtrim($characterMask = null): self
     {
@@ -491,25 +571,29 @@ class Str implements Countable
         }
 
         $characterMask = static::getStr($characterMask);
+
         return static::new(rtrim($this->str, $characterMask));
     }
 
     /**
-     * 比较字符串
+     * 比较字符串.
+     *
      * @see http://php.net/manual/zh/function.strcmp.php
      * @see http://php.net/manual/zh/function.strcasecmp.php
      * @see http://php.net/manual/zh/function.strncmp.php
      * @see http://php.net/manual/zh/function.strncasecmp.php
-     * @param string|Str $compStr 用于比较的字符串
-     * @param bool|null $caseSensitive 大小写敏感
-     * @param int|null $num 比较字节数，空则为全部，注：比较的是字节数而不是字符数
+     *
+     * @param string|Str $compStr       用于比较的字符串
+     * @param bool|null  $caseSensitive 大小写敏感
+     * @param int|null   $num           比较字节数，空则为全部，注：比较的是字节数而不是字符数
+     *
      * @return int
      */
     public function comp($compStr, bool $caseSensitive = null, int $num = null): int
     {
         $compStr = static::getStr($compStr);
-        $status  = static::default($caseSensitive, 'compCaseSensitive') << 1 | !is_null($num);
-        $diff    = false;
+        $status = static::default($caseSensitive, 'compCaseSensitive') << 1 | !is_null($num);
+        $diff = false;
         switch ($status) {
             // $caseSensitive = false, $num = null
             case 0b00:
@@ -533,11 +617,14 @@ class Str implements Countable
     }
 
     /**
-     * 使用自然排序算法比较字符串
+     * 使用自然排序算法比较字符串.
+     *
      * @see http://php.net/manual/zh/function.strnatcmp.php
      * @see http://php.net/manual/zh/function.strnatcasecmp.php
-     * @param string|Str $compStr 用于比较的字符串
-     * @param bool|null $caseSensitive 大小写敏感
+     *
+     * @param string|Str $compStr       用于比较的字符串
+     * @param bool|null  $caseSensitive 大小写敏感
+     *
      * @return int
      */
     public function natComp($compStr, bool $caseSensitive = null): int
@@ -550,8 +637,10 @@ class Str implements Countable
     }
 
     /**
-     * 判断字符串是否相等
+     * 判断字符串是否相等.
+     *
      * @param string|Str $str
+     *
      * @return bool
      */
     public function equals($str)
@@ -562,9 +651,11 @@ class Str implements Countable
     }
 
     /**
-     * 反转字符串
-     * @return Str 新实例
+     * 反转字符串.
+     *
      * @throws StrEncodingException
+     *
+     * @return Str 新实例
      */
     public function reverse(): self
     {
@@ -577,13 +668,14 @@ class Str implements Countable
     }
 
     /**
-     * 字符串转为字符数组
+     * 字符串转为字符数组.
+     *
      * @return array
      */
     public function toArray(): array
     {
-        $str   = $this->str;
-        $len   = mb_strlen($str);
+        $str = $this->str;
+        $len = mb_strlen($str);
         $array = [];
 
         while ($len) {
@@ -596,7 +688,8 @@ class Str implements Countable
     }
 
     /**
-     * 字符串转为 Ary 数组
+     * 字符串转为 Ary 数组.
+     *
      * @return Ary
      */
     public function toAry(): Ary
@@ -605,7 +698,8 @@ class Str implements Countable
     }
 
     /**
-     * 返回字符串长度
+     * 返回字符串长度.
+     *
      * @return int
      */
     public function len(): int
@@ -614,7 +708,8 @@ class Str implements Countable
     }
 
     /**
-     * 返回字符串长度
+     * 返回字符串长度.
+     *
      * @return int
      */
     public function count(): int
@@ -631,11 +726,14 @@ class Str implements Countable
     }
 
     /**
-     * 返回一个新实例
-     * @param string $str 实例包含的字符串
+     * 返回一个新实例.
+     *
+     * @param string      $str          实例包含的字符串
      * @param string|null $fromEncoding 字符串的原编码
-     * @return Str 新实例
+     *
      * @throws StrEncodingException
+     *
+     * @return Str 新实例
      */
     public static function new(string $str, string $fromEncoding = null): self
     {
@@ -644,8 +742,10 @@ class Str implements Countable
 
     /**
      * 将字符串转为 UTF-8 编码
-     * @param string $str 原字符串
+     *
+     * @param string $str          原字符串
      * @param string $fromEncoding 原编码格式
+     *
      * @return string UTF-8 编码的字符串
      */
     public static function convert(string $str, string $fromEncoding): string
@@ -655,6 +755,7 @@ class Str implements Countable
 
     /**
      * @param $str
+     *
      * @return string
      */
     protected static function getStr($str): string
@@ -665,11 +766,12 @@ class Str implements Countable
             return $str->str();
         }
 
-        return (string)$str;
+        return (string) $str;
     }
 
     /**
      * 设置类方法的默认值
+     *
      * @param array $default
      */
     public static function setDefault(array $default): void
@@ -682,8 +784,10 @@ class Str implements Countable
     /**
      * 若 $val 不为 null 则返回 $val
      * 若 $val 为 null 则直接返回 $default 数组中以 $key 为键名的值
+     *
      * @param mixed|null $val
-     * @param string $key
+     * @param string     $key
+     *
      * @return mixed|null
      */
     protected static function default($val, string $key = null)

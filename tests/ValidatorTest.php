@@ -69,7 +69,6 @@ class ValidatorTest extends TestCase
         $this->assertFalse(Validator::num(' 12 '));
         $this->assertFalse(Validator::num('1ABC'));
 
-
         $this->assertTrue(Validator::num('123', 3));
         $this->assertTrue(Validator::num('0123', 4));
         $this->assertFalse(Validator::num('1234', 3));
@@ -182,7 +181,7 @@ class ValidatorTest extends TestCase
 
     public function testJson()
     {
-        $json = <<<EOT
+        $json = <<<'EOT'
 {
     "name": "zane",
     "email": "pi@0php.net"
@@ -328,6 +327,7 @@ EOT;
             if ($val === 'A') {
                 return true;
             }
+
             return false;
         };
 

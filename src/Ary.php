@@ -1,19 +1,20 @@
 <?php
 /**
- * Ary 类
+ * Ary 类.
  *
  * 提供各种方便的方法操作数组
  *
- * @package    utils
  * @license    MIT
+ *
  * @link       https://github.com/zanemmm/utils
  */
+
 namespace Zane\Utils;
 
-use IteratorAggregate;
 use ArrayAccess;
 use ArrayIterator;
 use Countable;
+use IteratorAggregate;
 use JsonSerializable;
 use Zane\Utils\Exceptions\AryKeyTypeException;
 use Zane\Utils\Exceptions\AryOutOfRangeException;
@@ -66,8 +67,10 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 获取或设置该实例的数组
+     * 获取或设置该实例的数组.
+     *
      * @param array|null $array 为空时获取实例的数组，非空时设置实例的数组
+     *
      * @return $this|array 原实例或数组
      */
     public function val(array $array = null)
@@ -83,9 +86,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
 
     /**
      * 使用「点」式语法从深度嵌套数组中取回指定的值
+     *
      * @see https://laravel.com/docs/5.6/helpers#method-array-get
-     * @param string $dotKey 符合「点」式语法的键名
+     *
+     * @param string     $dotKey  符合「点」式语法的键名
      * @param mixed|null $default 默认值
+     *
      * @return mixed
      */
     public function get(string $dotKey = null, $default = null)
@@ -116,9 +122,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
 
     /**
      * 使用「点」式语法从深度嵌套数组中设置指定的值
+     *
      * @see https://laravel.com/docs/5.6/helpers#method-array-set
+     *
      * @param string $dotKey 符合「点」式语法的键名
-     * @param mixed $val 要设置的值
+     * @param mixed  $val    要设置的值
+     *
      * @return Ary 原实例
      */
     public function set(string $dotKey, $val): self
@@ -142,9 +151,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 使用「点」式语法判断是否存在指定键名的值，多个键名要全部存在才返回 true
+     * 使用「点」式语法判断是否存在指定键名的值，多个键名要全部存在才返回 true.
+     *
      * @see https://laravel.com/docs/5.6/helpers#method-array-has
+     *
      * @param string[] $dotKeys 符合「点」式语法的键名
+     *
      * @return bool
      */
     public function has(string ...$dotKeys): bool
@@ -172,8 +184,10 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 返回只包含指定键名的新实例
+     * 返回只包含指定键名的新实例.
+     *
      * @param array ...$keys
+     *
      * @return Ary 新实例
      */
     public function only(...$keys)
@@ -185,7 +199,9 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
 
     /**
      * 获取实例数组中的全部值
+     *
      * @see http://php.net/manual/zh/function.array-values.php
+     *
      * @return Ary 新实例
      */
     public function values(): self
@@ -194,10 +210,13 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 获取实例数组中的键名
+     * 获取实例数组中的键名.
+     *
      * @see http://php.net/manual/zh/function.array-keys.php
+     *
      * @param mixed|null $searchValue 空则返回全部键，非空则返回对应 $searchValue 值的键
-     * @param bool|null $strict 为真时数组中的值与 $searchValue 采用严格比较
+     * @param bool|null  $strict      为真时数组中的值与 $searchValue 采用严格比较
+     *
      * @return Ary 新实例
      */
     public function keys($searchValue = null, bool $strict = null): self
@@ -219,7 +238,8 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 返回一个全部键名大写的新实例
+     * 返回一个全部键名大写的新实例.
+     *
      * @return Ary 新实例
      */
     public function keyToUpperCase(): self
@@ -230,7 +250,8 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 返回一个全部键名小写的新实例
+     * 返回一个全部键名小写的新实例.
+     *
      * @return Ary 新实例
      */
     public function keyToLowerCase()
@@ -242,6 +263,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
 
     /**
      * 返回两个实例，一个包含原本实例的键，另一个包含原本实例的值
+     *
      * @return Ary[]
      */
     public function divide(): array
@@ -251,6 +273,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
 
     /**
      * 获取实例数组中第一个元素的值
+     *
      * @return mixed
      */
     public function first()
@@ -260,6 +283,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
 
     /**
      * 获取实例数组中最后一个元素的值
+     *
      * @return mixed
      */
     public function last()
@@ -268,30 +292,37 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 获取实例数组中第一个元素的键
+     * 获取实例数组中第一个元素的键.
+     *
      * @return int|null|string
      */
     public function firstKey()
     {
         $this->first();
+
         return key($this->val);
     }
 
     /**
-     * 获取实例数组中最后一个元素的键
+     * 获取实例数组中最后一个元素的键.
+     *
      * @return int|null|string
      */
     public function lastKey()
     {
         $this->last();
+
         return key($this->val);
     }
 
     /**
-     * 获取实例数组中前 $len 个元素组成的新 Ary 实例
+     * 获取实例数组中前 $len 个元素组成的新 Ary 实例.
+     *
      * @see \Zane\Utils\Ary::slice()
-     * @param int $len 获取元素的个数，小于等于 0 则返回空数组的实例，大于等于实例数组的长度则返回原数组(索引可能会改变具体看 $preserveKeys 参数)的新实例
+     *
+     * @param int       $len          获取元素的个数，小于等于 0 则返回空数组的实例，大于等于实例数组的长度则返回原数组(索引可能会改变具体看 $preserveKeys 参数)的新实例
      * @param bool|null $preserveKeys 为 true 则数字索引保持不变，false 则会重置数组的数字索引，字符串键名始终保持不变
+     *
      * @return Ary 新实例
      */
     public function limit(int $len, bool $preserveKeys = null): self
@@ -306,10 +337,13 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 获取实例数组中后 $len 个元素组成的新 Ary 实例
+     * 获取实例数组中后 $len 个元素组成的新 Ary 实例.
+     *
      * @see \Zane\Utils\Ary::slice()
-     * @param int $len 获取元素的个数，小于等于 0 则返回空数组的实例，大于等于实例数组的长度则返回原数组(索引可能会改变具体看 $preserveKeys 参数)的新实例
+     *
+     * @param int       $len          获取元素的个数，小于等于 0 则返回空数组的实例，大于等于实例数组的长度则返回原数组(索引可能会改变具体看 $preserveKeys 参数)的新实例
      * @param bool|null $preserveKeys 为 true 则数字索引保持不变，false 则会重置数组的数字索引，字符串键名始终保持不变
+     *
      * @return Ary 新实例
      */
     public function tail(int $len, bool $preserveKeys = null): self
@@ -324,11 +358,14 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 从实例数组中取出一段并返回新的实例
+     * 从实例数组中取出一段并返回新的实例.
+     *
      * @see http://php.net/manual/zh/function.array-slice.php
-     * @param int $offset 起始偏移量
-     * @param int $len 长度
+     *
+     * @param int       $offset       起始偏移量
+     * @param int       $len          长度
      * @param bool|null $preserveKeys 为 true 则数字索引保持不变，false 则会重置数组的数字索引，字符串键名始终保持不变
+     *
      * @return Ary 新实例
      */
     public function slice(int $offset, int $len = null, bool $preserveKeys = null): self
@@ -339,10 +376,13 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 将一个实例数组分割为多个并返回多个新实例
+     * 将一个实例数组分割为多个并返回多个新实例.
+     *
      * @see http://php.net/manual/zh/function.array-chunk.php
-     * @param int $size 每个新实例数组的大小，最后一个实例数组可能小于 $size
+     *
+     * @param int       $size         每个新实例数组的大小，最后一个实例数组可能小于 $size
      * @param bool|null $preserveKeys 为 true 则数字索引保持不变，false 则会重置数组的数字索引
+     *
      * @return Ary 新实例
      */
     public function chunk(int $size, bool $preserveKeys = null): self
@@ -358,10 +398,13 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 返回由实例数组中指定的一列所组成的新实例
+     * 返回由实例数组中指定的一列所组成的新实例.
+     *
      * @see http://php.net/manual/zh/function.array-column.php
+     *
      * @param mixed $columnKey 需要返回值的列，它可以是索引数组的列索引，或者是关联数组的列的键，也可以是属性名，为 NULL 时返回整个数组
-     * @param null $indexKey 作为返回数组的索引或键的列
+     * @param null  $indexKey  作为返回数组的索引或键的列
+     *
      * @return Ary 新实例
      */
     public function column($columnKey, $indexKey = null): self
@@ -376,17 +419,22 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
                     return array_column($array, $columnKey, $indexKey);
                 }
             };
+
             return static::new($object->do($this->val, $columnKey, $indexKey));
         }
+
         return static::new(array_column($this->val, $columnKey, $indexKey));
     }
 
     /**
-     * column 的加强版，能获取多列，但不会获取对象的属性
+     * column 的加强版，能获取多列，但不会获取对象的属性.
+     *
      * @param array|null $columnKeys 包含指定键的数组
-     * @param mixed|null $indexKey 作为返回数组的索引或键的列
-     * @return Ary 新实例
+     * @param mixed|null $indexKey   作为返回数组的索引或键的列
+     *
      * @throws AryKeyTypeException
+     *
+     * @return Ary 新实例
      */
     public function select(array $columnKeys = null, $indexKey = null): self
     {
@@ -419,14 +467,17 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 返回与指定列条件相符的所有行组成的实例
+     * 返回与指定列条件相符的所有行组成的实例.
+     *
      * @param string|int $columnKey 指定列键名
-     * @param string $operator 比较符，包括： >、>=、==、===、<、<=
-     * @param mixed $expected 比较值
-     * @return Ary 新的实例
+     * @param string     $operator  比较符，包括： >、>=、==、===、<、<=
+     * @param mixed      $expected  比较值
+     *
      * @throws AryKeyTypeException
+     *
+     * @return Ary 新的实例
      */
-    public function where($columnKey, string $operator, $expected): Ary
+    public function where($columnKey, string $operator, $expected): self
     {
         if (!static::isValidKey($columnKey)) {
             throw new AryKeyTypeException();
@@ -439,17 +490,17 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
             $val = $row[$columnKey];
             switch ($operator) {
                 case '>':
-                    return $val >  $expected;
+                    return $val > $expected;
                 case '>=':
-                    return $val >=  $expected;
+                    return $val >= $expected;
                 case '==':
-                    return $val ==  $expected;
+                    return $val == $expected;
                 case '===':
                     return $val === $expected;
                 case '<':
-                    return $val <   $expected;
+                    return $val < $expected;
                 case '<=':
-                    return $val <=  $expected;
+                    return $val <= $expected;
                 default:
                     return false;
             }
@@ -462,8 +513,10 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
 
     /**
      * 统计实例数组中值的出现次数,
-     * 返回一个键为原数组的值，值为原数组值出现的次数的新实例
+     * 返回一个键为原数组的值，值为原数组值出现的次数的新实例.
+     *
      * @see http://php.net/manual/zh/function.array-count-values.php
+     *
      * @return Ary 新实例
      */
     public function countValues(): self
@@ -472,8 +525,10 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 交换实例数组中的键和值并返回新的实例
+     * 交换实例数组中的键和值并返回新的实例.
+     *
      * @see http://php.net/manual/zh/function.array-flip.php
+     *
      * @return Ary 新实例
      */
     public function flip(): self
@@ -483,9 +538,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
 
     /**
      * 检查实例数组中是否存在某个值
+     *
      * @see http://php.net/manual/zh/function.in-array.php
-     * @param mixed $needle 要检查的值
+     *
+     * @param mixed     $needle 要检查的值
      * @param bool|null $strict 是否严格比较
+     *
      * @return bool
      */
     public function exist($needle, bool $strict = null): bool
@@ -494,11 +552,15 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 检查实例数组里是否有指定的键名或索引
+     * 检查实例数组里是否有指定的键名或索引.
+     *
      * @see http://php.net/manual/zh/function.array-key-exists.php
+     *
      * @param int|string $key 要检查的键
-     * @return bool
+     *
      * @throws AryKeyTypeException
+     *
+     * @return bool
      */
     public function existKey($key): bool
     {
@@ -507,15 +569,19 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
         }
         // isset 性能比 array_key_exists 高，但 isset 在数组成员的值为 null 时会返回 false
         // 所以利用 || 运算符的短路特性，仅当 isset 为 false 时使用 array_key_exists 判断是否存在该键
-        return (isset($this->val[$key]) || array_key_exists($key, $this->val));
+        return isset($this->val[$key]) || array_key_exists($key, $this->val);
     }
 
     /**
-     * 检查实例数组存在指定键名的值，且值不为 null
+     * 检查实例数组存在指定键名的值，且值不为 null.
+     *
      * @see http://php.net/manual/zh/function.isset.php
+     *
      * @param int|string $key
-     * @return bool
+     *
      * @throws AryKeyTypeException
+     *
+     * @return bool
      */
     public function isSet($key): bool
     {
@@ -527,7 +593,8 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 判断实例数组是否为关联数组
+     * 判断实例数组是否为关联数组.
+     *
      * @return bool
      */
     public function isAssoc()
@@ -538,14 +605,17 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 对实例数组的值进行排序
+     * 对实例数组的值进行排序.
+     *
      * @see http://php.net/manual/zh/function.sort.php
      * @see http://php.net/manual/zh/function.rsort.php
      * @see http://php.net/manual/zh/function.asort.php
      * @see http://php.net/manual/zh/function.arsort.php
-     * @param bool|null $asc true为升序，false为降序
+     *
+     * @param bool|null $asc          true为升序，false为降序
      * @param bool|null $preserveKeys true 则保持索引关联，false 则以数字索引重置
-     * @param int|null $flag 排序类型标记，参见 PHP 手册 sort 函数
+     * @param int|null  $flag         排序类型标记，参见 PHP 手册 sort 函数
+     *
      * @return Ary 原实例
      */
     public function sort(bool $asc = null, bool $preserveKeys = null, int $flag = null): self
@@ -553,7 +623,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
         // 通过将 $asc 左移一位并或上 $preserveKeys 得出范围在 0b00 到 0b11 的 $status
         // 通过 $status 的值选择不同的排序函数
         $status = static::default($asc, 'sortAsc') << 1 | static::default($preserveKeys, 'sortPreserveKeys');
-        $flag   = static::default($flag, 'sortFlag');
+        $flag = static::default($flag, 'sortFlag');
 
         switch ($status) {
             // $asc = false, $preserveKeys = false
@@ -578,11 +648,14 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 使用用户自定义的比较函数对数组中的值进行排序
+     * 使用用户自定义的比较函数对数组中的值进行排序.
+     *
      * @see http://php.net/manual/zh/function.usort.php
      * @see http://php.net/manual/zh/function.uasort.php
-     * @param callable $fn 比较函数
+     *
+     * @param callable  $fn           比较函数
      * @param bool|null $preserveKeys true 则保持索引关联，false 则以数字索引重置
+     *
      * @return Ary 原实例
      */
     public function userSort(callable $fn, bool $preserveKeys = null): self
@@ -597,10 +670,13 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 用“自然排序”算法对实例数组的值进行排序
+     * 用“自然排序”算法对实例数组的值进行排序.
+     *
      * @see http://php.net/manual/zh/function.natsort.php
      * @see http://php.net/manual/zh/function.natcasesort.php
+     *
      * @param bool|null $caseSensitive 大小写敏感
+     *
      * @return Ary 原实例
      */
     public function natSort(bool $caseSensitive = null): self
@@ -615,10 +691,13 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 对实例数组按照键名排序
+     * 对实例数组按照键名排序.
+     *
      * @see http://php.net/manual/zh/function.ksort.php
-     * @param bool|null $asc true 为升序，false 为降序
-     * @param int|null $flag 排序类型标记，参见 PHP 手册 sort 函数
+     *
+     * @param bool|null $asc  true 为升序，false 为降序
+     * @param int|null  $flag 排序类型标记，参见 PHP 手册 sort 函数
+     *
      * @return Ary 原实例
      */
     public function keySort(bool $asc = null, int $flag = null): self
@@ -633,9 +712,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 使用用户自定义的比较函数对数组中的键名进行排序
+     * 使用用户自定义的比较函数对数组中的键名进行排序.
+     *
      * @see http://php.net/manual/zh/function.uksort.php
+     *
      * @param callable $fn 比较函数
+     *
      * @return Ary 原实例
      */
     public function userKeySort(callable $fn): self
@@ -647,6 +729,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
 
     /**
      * 返回实例数组中的最大值
+     *
      * @return mixed
      */
     public function max()
@@ -656,6 +739,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
 
     /**
      * 返回实例数组中的最小值
+     *
      * @return mixed
      */
     public function min()
@@ -664,7 +748,8 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 返回实例数组中的最大值的键名
+     * 返回实例数组中的最大值的键名.
+     *
      * @return mixed
      */
     public function maxKey()
@@ -673,7 +758,8 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 返回实例数组中的最小值的键名
+     * 返回实例数组中的最小值的键名.
+     *
      * @return mixed
      */
     public function minKey()
@@ -682,8 +768,10 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 打乱实例数组顺序
+     * 打乱实例数组顺序.
+     *
      * @see http://php.net/manual/zh/function.shuffle.php
+     *
      * @return Ary 原实例
      */
     public function shuffle(): self
@@ -695,8 +783,11 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
 
     /**
      * 移除实例数组中重复的值
+     *
      * @see http://php.net/manual/zh/function.array-unique.php
+     *
      * @param int|null $flag 排序类型标记
+     *
      * @return Ary 新实例
      */
     public function unique(int $flag = null): self
@@ -707,8 +798,10 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 返回单元顺序相反的实例数组
+     * 返回单元顺序相反的实例数组.
+     *
      * @see http://php.net/manual/zh/function.array-reverse.php
+     *
      * @return Ary 新实例
      */
     public function reverse(): self
@@ -720,7 +813,9 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
 
     /**
      * 移除实例数组中指定键名的值
+     *
      * @param array ...$keys 指定键名
+     *
      * @return Ary 新实例
      */
     public function except(...$keys): self
@@ -731,9 +826,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 向实例数组的末尾插入元素（入栈）
+     * 向实例数组的末尾插入元素（入栈）.
+     *
      * @see http://php.net/manual/zh/function.array-push.php
+     *
      * @param array ...$elements 插入的元素，可为任意多个
+     *
      * @return Ary 原实例
      */
     public function push(...$elements): self
@@ -744,9 +842,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 从实例数组中的末尾弹出一个元素（出栈）
+     * 从实例数组中的末尾弹出一个元素（出栈）.
+     *
      * @see http://php.net/manual/zh/function.array-pop.php
+     *
      * @param bool|null $getElement true 则返回元素值，false 则返回原实例
+     *
      * @return $this|mixed 原实例或元素值
      */
     public function pop(bool $getElement = null)
@@ -760,9 +861,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 向实例数组的开头插入元素
+     * 向实例数组的开头插入元素.
+     *
      * @see http://php.net/manual/zh/function.array-unshift.php
+     *
      * @param array ...$elements 插入的元素可为任意多个
+     *
      * @return Ary 原实例
      */
     public function unShift(...$elements): self
@@ -773,9 +877,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 从实例数组中的开头弹出一个元素
+     * 从实例数组中的开头弹出一个元素.
+     *
      * @see http://php.net/manual/zh/function.array-shift.php
+     *
      * @param bool|null $getElement true 则返回元素值，false 则返回原实例
+     *
      * @return $this|mixed 原实例或元素值
      */
     public function shift(bool $getElement = null)
@@ -789,10 +896,13 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 向实例数组尾部追加一个实例数组
+     * 向实例数组尾部追加一个实例数组.
+     *
      * @see http://php.net/manual/zh/function.array-merge.php
-     * @param Ary $array 要追加的数组
+     *
+     * @param Ary       $array          要追加的数组
      * @param bool|null $preserveValues true 则相同键名（包括数字索引）不会覆盖原实例数组，false 相同键名会覆盖原实例数组，数字索引会重新索引
+     *
      * @return Ary 新实例
      */
     public function append(self $array, bool $preserveValues = null): self
@@ -808,10 +918,13 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 在数组中搜索给定的值，如果成功则返回首个相应的键名
+     * 在数组中搜索给定的值，如果成功则返回首个相应的键名.
+     *
      * @see http://php.net/manual/zh/function.array-search.php
-     * @param mixed $needle 要搜索的值
+     *
+     * @param mixed     $needle 要搜索的值
      * @param bool|null $strict 是否采用严格比较
+     *
      * @return false|int|string 搜索结果的键名或 false
      */
     public function search($needle, bool $strict = null)
@@ -820,10 +933,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 获取第一个指定值之前的元素所组成的实例数组
-     * @param mixed $needle 指定值
-     * @param bool|null $contain 结果是否包含指定值
+     * 获取第一个指定值之前的元素所组成的实例数组.
+     *
+     * @param mixed     $needle       指定值
+     * @param bool|null $contain      结果是否包含指定值
      * @param bool|null $preserveKeys 为 true 则数字索引保持不变，false 则会重置数组的数字索引，字符串键名始终保持不变
+     *
      * @return Ary 新实例
      */
     public function before($needle, bool $contain = null, bool $preserveKeys = null): self
@@ -844,10 +959,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 获取第一个指定值之后的元素所组成的实例数组
-     * @param mixed $needle 指定值
-     * @param bool|null $contain 结果是否包含指定值
+     * 获取第一个指定值之后的元素所组成的实例数组.
+     *
+     * @param mixed     $needle       指定值
+     * @param bool|null $contain      结果是否包含指定值
      * @param bool|null $preserveKeys 为 true 则数字索引保持不变，false 则会重置数组的数字索引，字符串键名始终保持不变
+     *
      * @return Ary 新实例
      */
     public function after($needle, bool $contain = null, bool $preserveKeys = null): self
@@ -867,9 +984,11 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 获取指定键名之前的元素所组成的实例数组
-     * @param string|int $key 指定的键名
-     * @param bool|null $contain 是否包含该键名的元素
+     * 获取指定键名之前的元素所组成的实例数组.
+     *
+     * @param string|int $key     指定的键名
+     * @param bool|null  $contain 是否包含该键名的元素
+     *
      * @return Ary 新实例
      */
     public function beforeKey($key, bool $contain = null): self
@@ -877,7 +996,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
         if (!array_key_exists($key, $this->val)) {
             return static::new([]);
         }
-        
+
         $len = $this->keys()->search($key, true);
         if (static::default($contain, 'beforeKeyContain')) {
             $len++;
@@ -887,9 +1006,11 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 获取指定键名之后的元素所组成的实例数组
-     * @param string|int $key 指定的键名
-     * @param bool|null $contain 是否包含该键名的元素
+     * 获取指定键名之后的元素所组成的实例数组.
+     *
+     * @param string|int $key     指定的键名
+     * @param bool|null  $contain 是否包含该键名的元素
+     *
      * @return Ary 新实例
      */
     public function afterKey($key, bool $contain = null)
@@ -907,12 +1028,15 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 使用传递的实例数组替换原实例数组中的元素
+     * 使用传递的实例数组替换原实例数组中的元素.
+     *
      * @see http://php.net/manual/zh/function.array-replace.php
+     *
      * @param Ary[] ...$arrays 替换的实例数组
+     *
      * @return Ary 新实例
      */
-    public function replace(Ary ...$arrays): self
+    public function replace(self ...$arrays): self
     {
         $ary = static::new($arrays);
 
@@ -922,14 +1046,17 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 返回两实例数组的值的交集
+     * 返回两实例数组的值的交集.
+     *
      * @see http://php.net/manual/zh/function.array-intersect.php
      * @see http://php.net/manual/zh/function.array-intersect-assoc.php
-     * @param Ary $ary 用于比较的实例
+     *
+     * @param Ary       $ary     用于比较的实例
      * @param bool|null $compKey 是否比较键名
+     *
      * @return Ary 新实例
      */
-    public function intersect(Ary $ary, bool $compKey = null): Ary
+    public function intersect(self $ary, bool $compKey = null): self
     {
         if (static::default($compKey, 'intersectCompKey')) {
             $val = array_intersect_assoc($this->val, $ary->val());
@@ -941,14 +1068,17 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 返回两实例数组的值的差集
+     * 返回两实例数组的值的差集.
+     *
      * @see http://php.net/manual/zh/function.array-diff.php
      * @see http://php.net/manual/zh/function.array-diff-assoc.php
-     * @param Ary $ary 用于比较的实例
+     *
+     * @param Ary       $ary     用于比较的实例
      * @param bool|null $compKey 是否比较键名
+     *
      * @return Ary 新实例
      */
-    public function diff(Ary $ary, bool $compKey = null): Ary
+    public function diff(self $ary, bool $compKey = null): self
     {
         if (static::default($compKey, 'diffCompKey')) {
             $val = array_diff_assoc($this->val, $ary->val());
@@ -960,12 +1090,15 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 使用键名比较计算实例数组的交集
+     * 使用键名比较计算实例数组的交集.
+     *
      * @see http://php.net/manual/zh/function.array-intersect-key.php
+     *
      * @param Ary $ary 用于比较的实例
+     *
      * @return Ary 新实例
      */
-    public function intersectKey(Ary $ary): Ary
+    public function intersectKey(self $ary): self
     {
         $val = array_intersect_key($this->val, $ary->val());
 
@@ -973,22 +1106,27 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 使用键名比较计算实例数组的差集
+     * 使用键名比较计算实例数组的差集.
+     *
      * @see http://php.net/manual/zh/function.array-diff-key.php
+     *
      * @param Ary $ary 用于比较的实例
+     *
      * @return Ary 新实例
      */
-    public function diffKey(Ary $ary): Ary
+    public function diffKey(self $ary): self
     {
         $val = array_diff_key($this->val, $ary->val());
 
         return static::new($val);
     }
-    
+
     /**
      * 清除实例数组中所有等值为 false 的元素（包括： null false 0 '' []）
-     * 警告：空的 Ary 实例并不会清除
+     * 警告：空的 Ary 实例并不会清除.
+     *
      * @see http://php.net/manual/zh/function.array-filter.php
+     *
      * @return Ary 原实例
      */
     public function clean(): self
@@ -999,9 +1137,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 将实例数组连接为字符串
+     * 将实例数组连接为字符串.
+     *
      * @see http://php.net/manual/zh/function.implode.php
+     *
      * @param string|null $glue 元素间连接的字符串，默认为 ''
+     *
      * @return string
      */
     public function join(string $glue = null): string
@@ -1017,11 +1158,14 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 使用用户自定义函数对实例数组中的每个元素做回调处理
+     * 使用用户自定义函数对实例数组中的每个元素做回调处理.
+     *
      * @see http://php.net/manual/zh/function.array-walk.php
-     * @param callable $fn 使用的回调函数
-     * @param null $userData 用户数据，回调函数的第三个参数
-     * @param bool $recursive 是否递归实例数组
+     *
+     * @param callable $fn        使用的回调函数
+     * @param null     $userData  用户数据，回调函数的第三个参数
+     * @param bool     $recursive 是否递归实例数组
+     *
      * @return Ary 原实例
      */
     public function each(callable $fn, $userData = null, bool $recursive = null): self
@@ -1037,9 +1181,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 为实例数组的每个元素应用回调函数
+     * 为实例数组的每个元素应用回调函数.
+     *
      * @see http://php.net/manual/zh/function.array-map.php
+     *
      * @param callable $fn 使用的回调函数
+     *
      * @return Ary 新实例
      */
     public function map(callable $fn): self
@@ -1050,10 +1197,13 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 用回调函数过滤实例数组中的元素
+     * 用回调函数过滤实例数组中的元素.
+     *
      * @see http://php.net/manual/zh/function.array-filter.php
-     * @param callable $fn 使用的回调函数
+     *
+     * @param callable $fn   使用的回调函数
      * @param int|null $flag 决定callback接收的参数形式
+     *
      * @return Ary 新实例
      */
     public function filter(callable $fn, int $flag = null): self
@@ -1065,9 +1215,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
 
     /**
      * 用回调函数迭代地将实例数组简化为单一的值
+     *
      * @see http://php.net/manual/zh/function.array-reduce.php
-     * @param callable $fn 使用的回调函数
+     *
+     * @param callable   $fn      使用的回调函数
      * @param mixed|null $initial 回调函数初始值
+     *
      * @return mixed
      */
     public function reduce(callable $fn, $initial = null)
@@ -1076,8 +1229,10 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 将一个多维数组扁平化为一个一维数组
+     * 将一个多维数组扁平化为一个一维数组.
+     *
      * @param bool|null $preserveKeys true 保持值不为数组或 Ary 对象的字符串键名，重置数字索引，false 则删除所有键名，重新以数字索引
+     *
      * @return Ary 新实例
      */
     public function flat(bool $preserveKeys = null)
@@ -1097,10 +1252,13 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 以指定长度将一个值填充进实例数组
+     * 以指定长度将一个值填充进实例数组.
+     *
      * @see http://php.net/manual/zh/function.array-pad.php
-     * @param int $size 新实例数组的长度
+     *
+     * @param int   $size    新实例数组的长度
      * @param mixed $element 填充的值
+     *
      * @return Ary 新实例
      */
     public function pad(int $size, $element): self
@@ -1111,8 +1269,10 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 返回用 $val 填充当前所有键的新实例
+     * 返回用 $val 填充当前所有键的新实例.
+     *
      * @param mixed $val 填充值
+     *
      * @return Ary 新实例
      */
     public function fill($val): self
@@ -1121,8 +1281,10 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 判断实例数组是否为空
+     * 判断实例数组是否为空.
+     *
      * @see http://php.net/manual/zh/function.empty.php
+     *
      * @return bool
      */
     public function empty(): bool
@@ -1131,8 +1293,10 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 计算实例数组中所有值的乘积
+     * 计算实例数组中所有值的乘积.
+     *
      * @see http://php.net/manual/zh/function.array-product.php
+     *
      * @return float
      */
     public function product(): float
@@ -1141,17 +1305,20 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 确认实例数组中的值全为 true，请确保实例数组中只包含：布尔类型的数据，否则将产生未预料的结果
+     * 确认实例数组中的值全为 true，请确保实例数组中只包含：布尔类型的数据，否则将产生未预料的结果.
+     *
      * @return bool
      */
     public function allTrue(): bool
     {
-        return (bool)$this->product();
+        return (bool) $this->product();
     }
 
     /**
-     * 对实例数组中所有值求和
+     * 对实例数组中所有值求和.
+     *
      * @see http://php.net/manual/zh/function.array-sum.php
+     *
      * @return float
      */
     public function sum(): float
@@ -1160,11 +1327,15 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 从实例数组中随机取出一个或多个元素组成新的实例，保持索引关联
+     * 从实例数组中随机取出一个或多个元素组成新的实例，保持索引关联.
+     *
      * @see http://php.net/manual/zh/function.array-rand.php
+     *
      * @param int $num 取出数量
-     * @return Ary 新实例
+     *
      * @throws AryOutOfRangeException
+     *
+     * @return Ary 新实例
      */
     public function rand(int $num): self
     {
@@ -1179,13 +1350,16 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
             $keys = array_rand($this->val, $num);
             $val = array_intersect_key($this->val, array_flip($keys));
         }
+
         return static::new($val);
     }
 
     /**
      * 从实例数组中随机取出一个元素的值
-     * @return mixed
+     *
      * @throws AryOutOfRangeException
+     *
+     * @return mixed
      */
     public function randVal()
     {
@@ -1197,9 +1371,11 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 从实例数组中随机取出一个元素的键名
-     * @return mixed
+     * 从实例数组中随机取出一个元素的键名.
+     *
      * @throws AryOutOfRangeException
+     *
+     * @return mixed
      */
     public function randKey()
     {
@@ -1211,8 +1387,10 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 将实例数组转成普通数组
+     * 将实例数组转成普通数组.
+     *
      * @param bool|null $recursive true 则递归调用，false 则只会将当前实例数组中的 Ary 元素转为数组后便不再递归
+     *
      * @return array
      */
     public function toArray(bool $recursive = null): array
@@ -1250,9 +1428,11 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 将实例数组转为 json 字符串
+     * 将实例数组转为 json 字符串.
+     *
      * @param int|null $options 格式选项
-     * @param int|null $depth 最大嵌套深度
+     * @param int|null $depth   最大嵌套深度
+     *
      * @return string
      */
     public function toJson(int $options = null, int $depth = null): string
@@ -1329,8 +1509,10 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 返回一个新实例
+     * 返回一个新实例.
+     *
      * @param array $array 实例包含的数组
+     *
      * @return Ary 新实例
      */
     public static function new(array $array = []): self
@@ -1340,6 +1522,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
 
     /**
      * 设置类方法的默认值
+     *
      * @param array $default
      */
     public static function setDefault(array $default): void
@@ -1350,10 +1533,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 从 json 字符串创建一个新实例
-     * @param string $json json
-     * @param int|null $depth 最大嵌套深度
+     * 从 json 字符串创建一个新实例.
+     *
+     * @param string   $json    json
+     * @param int|null $depth   最大嵌套深度
      * @param int|null $options 格式选项
+     *
      * @return Ary 新实例
      */
     public static function fromJson(string $json, int $depth = null, int $options = null): self
@@ -1370,9 +1555,12 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
 
     /**
      * 创建一个新的实例数组，用第一个实例数组的值作为其键名，第二个实例数组的值作为其值
+     *
      * @see http://php.net/manual/zh/function.array-combine.php
+     *
      * @param Ary $key 作为键的实例数组
      * @param Ary $val 作为值的实例数组
+     *
      * @return Ary 新实例
      */
     public static function combine(self $key, self $val): self
@@ -1384,9 +1572,11 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
 
     /**
      * 创建指定长度的实例数组并填充一个值
-     * @param int $startIndex 实例数组第一个索引
-     * @param int $num 实例数组长度
-     * @param mixed $val 填充值
+     *
+     * @param int   $startIndex 实例数组第一个索引
+     * @param int   $num        实例数组长度
+     * @param mixed $val        填充值
+     *
      * @return Ary 新实例
      */
     public static function newFill(int $startIndex, int $num, $val): self
@@ -1395,8 +1585,10 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 判断 $val 是否能以数组的方式访问
+     * 判断 $val 是否能以数组的方式访问.
+     *
      * @param mixed $val
+     *
      * @return bool
      */
     public static function accessible($val): bool
@@ -1405,8 +1597,10 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     }
 
     /**
-     * 判断 $key 是否能作键名
+     * 判断 $key 是否能作键名.
+     *
      * @param mixed $key
+     *
      * @return bool
      */
     public static function isValidKey($key): bool
@@ -1418,8 +1612,10 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      * 若传入两个参数，第一个参数为 null 时，则返回 $default 数组中以 $second 为键名的值
      * 若第一个参数不为 null 则返回第一个参数的值
      * 若只传入一个参数则直接返回 $default 数组中以 $first 为键名的值
-     * @param null $first
+     *
+     * @param null        $first
      * @param string|null $second
+     *
      * @return mixed|null
      */
     protected static function default($first, string $second = null)
