@@ -773,12 +773,16 @@ class Str implements Countable
      * 设置类方法的默认值
      *
      * @param array $default
+     *
+     * @return bool
      */
-    public static function setDefault(array $default): void
+    public static function setDefault(array $default): bool
     {
         foreach ($default as $key => $val) {
             static::$default[$key] = $val;
         }
+
+        return true;
     }
 
     /**
