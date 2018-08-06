@@ -33,7 +33,9 @@ echo Ary::new($data)->countValues()->max(); // red
 
 # 安装
 
-> composer require zane/utils
+```
+composer require zane/utils dev-master
+```
 
 # 项目进度
 
