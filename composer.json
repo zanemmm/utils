@@ -1,6 +1,13 @@
 {
     "name": "zane/utils",
     "type": "library",
+    "keywords": [
+        "array",
+        "string",
+        "validator",
+        "utils"
+    ],
+    "description": "A collection of useful classes like Ary, Str and Validator",
     "require": {
         "php": "7.*",
         "ext-mbstring": "*"
@@ -12,7 +19,8 @@
     "authors": [
         {
             "name": "zane",
-            "email": "pi@0php.net"
+            "email": "pi@0php.net",
+            "homepage": "https://www.0php.net"
         }
     ],
     "autoload": {
