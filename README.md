@@ -16,17 +16,16 @@
 <?php
 
 // 统计数组中出现次数最多的值
-$data = ['red', 'green', 'blue', 'red', 'red']
+$data = ['red', 'green', 'blue', 'red', 'red'];
 
 // 原生 PHP
 $cv = array_count_values($data);
 arsort($cv);
 $max = key($cv);
-echo $max // red
+echo $max; // red
 
 // Utils 的 Ary 类
-echo Ary::new($data)->countValues()->max(); // red
-
+echo Ary::new($data)->countValues()->maxKey(); // red
 ```
 
 是不是方便很多:bangbang:其实项目里很多方法都只是PHP自带函数的简单封装，但是通过链式调用在可读性和可维护性上真的是完爆使用自带函数:laughing:。
