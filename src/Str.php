@@ -392,7 +392,7 @@ class Str implements Countable
      *
      * @see http://php.net/manual/zh/function.str-repeat.php
      *
-     * @param int $num 重复次数
+     * @param int        $num       重复次数
      * @param string|Str $separator 分隔符
      *
      * @throws StrEncodingException
@@ -789,8 +789,8 @@ class Str implements Countable
      * 若 $val 不为 null 则返回 $val
      * 若 $val 为 null 则直接返回 $default 数组中以 $key 为键名的值
      *
-     * @param mixed $val
-     * @param string|null     $key
+     * @param mixed       $val
+     * @param string|null $key
      *
      * @return mixed|null
      */
