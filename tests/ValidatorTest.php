@@ -225,6 +225,7 @@ EOT;
         $this->assertTrue(Validator::domain('test.google.com.cn'));
         $this->assertTrue(Validator::domain('test.test.google.com.cn'));
         $this->assertFalse(Validator::domain('我爱你.中国'));
+        $this->assertFalse(Validator::domain('.google.com.cn'));
         $this->assertFalse(Validator::domain('google.com.cn.'));
         $this->assertFalse(Validator::domain('-google.com'));
         $this->assertFalse(Validator::domain('google-.com'));
@@ -257,6 +258,7 @@ EOT;
 
         $this->assertTrue(Validator::url('http://www.google.com', 'http'));
         $this->assertTrue(Validator::url('https://www.google.com', ['http', 'https']));
+        $this->assertTrue(Validator::url('http://www.google.com/index.php?hello=world#x', ['http', 'https']));
         $this->assertTrue(Validator::url('ftp://www.google.com', 'ftp'));
         $this->assertFalse(Validator::url('https://www.google.com', 'http'));
     }

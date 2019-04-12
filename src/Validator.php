@@ -39,11 +39,7 @@ class Validator
     public static function boolean(string $input): bool
     {
         $bool = filter_var($input, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-        if (is_null($bool)) {
-            return false;
-        }
-
-        return true;
+        return !is_null($bool);
     }
 
     /**
@@ -89,11 +85,7 @@ class Validator
             return $num;
         }
 
-        if (strlen($input) === $len) {
-            return true;
-        }
-
-        return false;
+        return strlen($input) === $len;
     }
 
     /**
@@ -122,11 +114,7 @@ class Validator
     {
         $int = filter_var($input, FILTER_VALIDATE_INT);
 
-        if ($int !== false) {
-            return true;
-        }
-
-        return false;
+        return $int !== false;
     }
 
     /**
@@ -143,11 +131,7 @@ class Validator
         $options = ['options' => ['max_range' => $max]];
         $int = filter_var($input, FILTER_VALIDATE_INT, $options);
 
-        if ($int !== false) {
-            return true;
-        }
-
-        return false;
+        return $int !== false;
     }
 
     /**
@@ -164,11 +148,7 @@ class Validator
         $options = ['options' => ['min_range' => $min]];
         $int = filter_var($input, FILTER_VALIDATE_INT, $options);
 
-        if ($int !== false) {
-            return true;
-        }
-
-        return false;
+        return $int !== false;
     }
 
     /**
@@ -191,11 +171,7 @@ class Validator
         ];
         $int = filter_var($input, FILTER_VALIDATE_INT, $options);
 
-        if ($int !== false) {
-            return true;
-        }
-
-        return false;
+        return $int !== false;
     }
 
     /**
@@ -211,11 +187,7 @@ class Validator
     {
         $float = filter_var($input, FILTER_VALIDATE_FLOAT);
 
-        if ($float !== false) {
-            return true;
-        }
-
-        return false;
+        return $float !== false;
     }
 
     /**
@@ -231,11 +203,7 @@ class Validator
     {
         $float = filter_var($input, FILTER_VALIDATE_FLOAT);
 
-        if ($float !== false && $float <= $max) {
-            return true;
-        }
-
-        return false;
+        return $float !== false && $float <= $max;
     }
 
     /**
@@ -251,11 +219,7 @@ class Validator
     {
         $float = filter_var($input, FILTER_VALIDATE_FLOAT);
 
-        if ($float !== false && $float >= $min) {
-            return true;
-        }
-
-        return false;
+        return $float !== false && $float >= $min;
     }
 
     /**
@@ -272,11 +236,7 @@ class Validator
     {
         $float = filter_var($input, FILTER_VALIDATE_FLOAT);
 
-        if ($float !== false && $float >= $min && $float <= $max) {
-            return true;
-        }
-
-        return false;
+        return $float !== false && $float >= $min && $float <= $max;
     }
 
     /**
@@ -306,11 +266,7 @@ class Validator
     {
         $ip = filter_var($input, FILTER_VALIDATE_IP);
 
-        if ($ip !== false) {
-            return true;
-        }
-
-        return false;
+        return $ip !== false;
     }
 
     /**
@@ -324,11 +280,7 @@ class Validator
     {
         $ip = filter_var($input, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4);
 
-        if ($ip !== false) {
-            return true;
-        }
-
-        return false;
+        return $ip !== false;
     }
 
     /**
@@ -342,11 +294,7 @@ class Validator
     {
         $ip = filter_var($input, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6);
 
-        if ($ip !== false) {
-            return true;
-        }
-
-        return false;
+        return $ip !== false;
     }
 
     /**
@@ -430,11 +378,7 @@ class Validator
     public static function email(string $input): bool
     {
         $email = filter_var($input, FILTER_VALIDATE_EMAIL);
-        if ($email !== false) {
-            return true;
-        }
-
-        return false;
+        return $email !== false;
     }
 
     /**
@@ -478,11 +422,7 @@ class Validator
         // 最后身份证最后一位数字
         $last = $code[$checksum % 11];
 
-        if ($input[17] == $last) {
-            return true;
-        }
-
-        return false;
+        return $input[17] == $last;
     }
 
     /**
@@ -499,7 +439,7 @@ class Validator
             $year = date('Y') - substr($input, 6, 4);
             $monthDay = date('md') - substr($input, 10, 4);
 
-            return ($year < $maxAge || $year == $maxAge && $monthDay <= 0) ? true : false;
+            return $year < $maxAge || ($year == $maxAge && $monthDay <= 0);
         }
 
         return false;
@@ -519,7 +459,7 @@ class Validator
             $year = date('Y') - substr($input, 6, 4);
             $monthDay = date('md') - substr($input, 10, 4);
 
-            return ($year > $minAge || $year == $minAge && $monthDay >= 0) ? true : false;
+            return $year > $minAge || ($year == $minAge && $monthDay >= 0);
         }
 
         return false;
@@ -539,11 +479,9 @@ class Validator
         if (static::IDCard($input)) {
             $year = date('Y') - substr($input, 6, 4);
             $monthDay = date('md') - substr($input, 10, 4);
-            $minAgeOk = ($year > $minAge || $year == $minAge && $monthDay >= 0) ? true : false;
-            $maxAgeOk = ($year < $maxAge || $year == $maxAge && $monthDay <= 0) ? true : false;
-            if ($minAgeOk && $maxAgeOk) {
-                return true;
-            }
+            $minAgeOk = $year > $minAge || ($year == $minAge && $monthDay >= 0);
+            $maxAgeOk = $year < $maxAge || ($year == $maxAge && $monthDay <= 0);
+            return $minAgeOk && $maxAgeOk;
         }
 
         return false;

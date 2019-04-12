@@ -10,7 +10,9 @@
     "description": "A collection of useful classes like Ary, Str and Validator",
     "require": {
         "php": "7.*",
-        "ext-mbstring": "*"
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "ext-ctype": "*"
     },
     "require-dev": {
         "phpunit/phpunit": "^6.5"
