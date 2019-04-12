@@ -402,8 +402,8 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      *
      * @see http://php.net/manual/zh/function.array-column.php
      *
-     * @param mixed $columnKey 需要返回值的列，它可以是索引数组的列索引，或者是关联数组的列的键，也可以是属性名，为 NULL 时返回整个数组
-     * @param string|int|null  $indexKey  作为返回数组的索引或键的列
+     * @param mixed           $columnKey 需要返回值的列，它可以是索引数组的列索引，或者是关联数组的列的键，也可以是属性名，为 NULL 时返回整个数组
+     * @param string|int|null $indexKey  作为返回数组的索引或键的列
      *
      * @return Ary 新实例
      */
@@ -905,7 +905,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      *
      * @return Ary 新实例
      */
-    public function append(Ary $array, bool $preserveValues = null): self
+    public function append(self $array, bool $preserveValues = null): self
     {
         $preserveValues = static::default($preserveValues, 'appendPreserveValues');
         if ($preserveValues) {
@@ -950,7 +950,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
         }
         // keys 将原数组的键名作为值，重新索引为新的数组
         // 通过 search 可以获取原数组的键名所对应的数字索引，此时的数字索引即为 slice 所需的长度
-        $len = (int)$this->keys()->search($key, true);
+        $len = (int) $this->keys()->search($key, true);
         if (static::default($contain, 'beforeContain')) {
             $len++;
         }
@@ -975,7 +975,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
             return static::new([]);
         }
         // 原理与 before 相同
-        $offset = (int)$this->keys()->search($key, true);
+        $offset = (int) $this->keys()->search($key, true);
         if (!static::default($contain, 'afterContain')) {
             $offset++;
         }
@@ -997,7 +997,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
             return static::new([]);
         }
 
-        $len = (int)$this->keys()->search($key, true);
+        $len = (int) $this->keys()->search($key, true);
         if (static::default($contain, 'beforeKeyContain')) {
             $len++;
         }
@@ -1019,7 +1019,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
             return static::new([]);
         }
 
-        $offset = (int)$this->keys()->search($key, true);
+        $offset = (int) $this->keys()->search($key, true);
         if (!static::default($contain, 'afterKeyContain')) {
             $offset++;
         }
@@ -1036,7 +1036,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      *
      * @return Ary 新实例
      */
-    public function replace(Ary ...$arrays): self
+    public function replace(self ...$arrays): self
     {
         $ary = static::new($arrays);
 
@@ -1056,7 +1056,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      *
      * @return Ary 新实例
      */
-    public function intersect(Ary $ary, bool $compKey = null): self
+    public function intersect(self $ary, bool $compKey = null): self
     {
         if (static::default($compKey, 'intersectCompKey')) {
             $val = array_intersect_assoc($this->val, $ary->val());
@@ -1078,7 +1078,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      *
      * @return Ary 新实例
      */
-    public function diff(Ary $ary, bool $compKey = null): self
+    public function diff(self $ary, bool $compKey = null): self
     {
         if (static::default($compKey, 'diffCompKey')) {
             $val = array_diff_assoc($this->val, $ary->val());
@@ -1098,7 +1098,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      *
      * @return Ary 新实例
      */
-    public function intersectKey(Ary $ary): self
+    public function intersectKey(self $ary): self
     {
         $val = array_intersect_key($this->val, $ary->val());
 
@@ -1114,7 +1114,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      *
      * @return Ary 新实例
      */
-    public function diffKey(Ary $ary): self
+    public function diffKey(self $ary): self
     {
         $val = array_diff_key($this->val, $ary->val());
 
@@ -1567,7 +1567,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      *
      * @return Ary 新实例
      */
-    public static function combine(Ary $key, Ary $val): self
+    public static function combine(self $key, self $val): self
     {
         return static::new(
             array_combine($key->val(), $val->val())
