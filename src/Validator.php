@@ -39,6 +39,7 @@ class Validator
     public static function boolean(string $input): bool
     {
         $bool = filter_var($input, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+
         return !is_null($bool);
     }
 
@@ -378,6 +379,7 @@ class Validator
     public static function email(string $input): bool
     {
         $email = filter_var($input, FILTER_VALIDATE_EMAIL);
+
         return $email !== false;
     }
 
@@ -481,6 +483,7 @@ class Validator
             $monthDay = date('md') - substr($input, 10, 4);
             $minAgeOk = $year > $minAge || ($year == $minAge && $monthDay >= 0);
             $maxAgeOk = $year < $maxAge || ($year == $maxAge && $monthDay <= 0);
+
             return $minAgeOk && $maxAgeOk;
         }
 
