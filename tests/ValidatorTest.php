@@ -352,13 +352,6 @@ EOT;
         $int = Validator::get('int');
         $this->assertTrue($int('123'));
         $this->assertFalse($int('ABC'));
-
-        try {
-            Validator::get('isB');
-        } catch (\Exception $exception) {
-            var_dump($exception->getMessage());
-        }
-
         // throw ValidatorNotFoundException
         Validator::get('isB');
     }

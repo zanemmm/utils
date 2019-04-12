@@ -71,7 +71,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      *
      * @param array|null $array 为空时获取实例的数组，非空时设置实例的数组
      *
-     * @return $this|array 原实例或数组
+     * @return Ary|array 原实例或数组
      */
     public function val(array $array = null)
     {
@@ -246,7 +246,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     {
         $val = array_change_key_case($this->val, CASE_UPPER);
 
-        return static::val($val);
+        return static::new($val);
     }
 
     /**
@@ -258,7 +258,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
     {
         $val = array_change_key_case($this->val, CASE_LOWER);
 
-        return static::val($val);
+        return static::new($val);
     }
 
     /**
@@ -403,7 +403,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      * @see http://php.net/manual/zh/function.array-column.php
      *
      * @param mixed $columnKey 需要返回值的列，它可以是索引数组的列索引，或者是关联数组的列的键，也可以是属性名，为 NULL 时返回整个数组
-     * @param null  $indexKey  作为返回数组的索引或键的列
+     * @param string|int|null  $indexKey  作为返回数组的索引或键的列
      *
      * @return Ary 新实例
      */
@@ -848,7 +848,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      *
      * @param bool|null $getElement true 则返回元素值，false 则返回原实例
      *
-     * @return $this|mixed 原实例或元素值
+     * @return Ary|mixed 原实例或元素值
      */
     public function pop(bool $getElement = null)
     {
@@ -883,7 +883,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      *
      * @param bool|null $getElement true 则返回元素值，false 则返回原实例
      *
-     * @return $this|mixed 原实例或元素值
+     * @return Ary|mixed 原实例或元素值
      */
     public function shift(bool $getElement = null)
     {
@@ -905,7 +905,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      *
      * @return Ary 新实例
      */
-    public function append(self $array, bool $preserveValues = null): self
+    public function append(Ary $array, bool $preserveValues = null): self
     {
         $preserveValues = static::default($preserveValues, 'appendPreserveValues');
         if ($preserveValues) {
@@ -950,7 +950,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
         }
         // keys 将原数组的键名作为值，重新索引为新的数组
         // 通过 search 可以获取原数组的键名所对应的数字索引，此时的数字索引即为 slice 所需的长度
-        $len = $this->keys()->search($key, true);
+        $len = (int)$this->keys()->search($key, true);
         if (static::default($contain, 'beforeContain')) {
             $len++;
         }
@@ -975,7 +975,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
             return static::new([]);
         }
         // 原理与 before 相同
-        $offset = $this->keys()->search($key, true);
+        $offset = (int)$this->keys()->search($key, true);
         if (!static::default($contain, 'afterContain')) {
             $offset++;
         }
@@ -997,7 +997,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
             return static::new([]);
         }
 
-        $len = $this->keys()->search($key, true);
+        $len = (int)$this->keys()->search($key, true);
         if (static::default($contain, 'beforeKeyContain')) {
             $len++;
         }
@@ -1019,7 +1019,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
             return static::new([]);
         }
 
-        $offset = $this->keys()->search($key, true);
+        $offset = (int)$this->keys()->search($key, true);
         if (!static::default($contain, 'afterKeyContain')) {
             $offset++;
         }
@@ -1032,11 +1032,11 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      *
      * @see http://php.net/manual/zh/function.array-replace.php
      *
-     * @param Ary[] ...$arrays 替换的实例数组
+     * @param Ary ...$arrays 替换的实例数组
      *
      * @return Ary 新实例
      */
-    public function replace(self ...$arrays): self
+    public function replace(Ary ...$arrays): self
     {
         $ary = static::new($arrays);
 
@@ -1056,7 +1056,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      *
      * @return Ary 新实例
      */
-    public function intersect(self $ary, bool $compKey = null): self
+    public function intersect(Ary $ary, bool $compKey = null): self
     {
         if (static::default($compKey, 'intersectCompKey')) {
             $val = array_intersect_assoc($this->val, $ary->val());
@@ -1078,7 +1078,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      *
      * @return Ary 新实例
      */
-    public function diff(self $ary, bool $compKey = null): self
+    public function diff(Ary $ary, bool $compKey = null): self
     {
         if (static::default($compKey, 'diffCompKey')) {
             $val = array_diff_assoc($this->val, $ary->val());
@@ -1098,7 +1098,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      *
      * @return Ary 新实例
      */
-    public function intersectKey(self $ary): self
+    public function intersectKey(Ary $ary): self
     {
         $val = array_intersect_key($this->val, $ary->val());
 
@@ -1114,7 +1114,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      *
      * @return Ary 新实例
      */
-    public function diffKey(self $ary): self
+    public function diffKey(Ary $ary): self
     {
         $val = array_diff_key($this->val, $ary->val());
 
@@ -1141,11 +1141,11 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      *
      * @see http://php.net/manual/zh/function.implode.php
      *
-     * @param string|null $glue 元素间连接的字符串，默认为 ''
+     * @param string $glue 元素间连接的字符串，默认为 ''
      *
      * @return string
      */
-    public function join(string $glue = null): string
+    public function join(string $glue = ''): string
     {
         // 当 val 数组中存在 Ary 实例时，其魔术方法 __toString 会同样调用 join 方法，并以 $default 中 joinGlue 的值为 $glue
         // 所以调用 join 方法时需要将 $default 中 joinGlue 的值设置为当前实参 $glue， 并在调用结束后恢复原值
@@ -1163,7 +1163,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      * @see http://php.net/manual/zh/function.array-walk.php
      *
      * @param callable $fn        使用的回调函数
-     * @param null     $userData  用户数据，回调函数的第三个参数
+     * @param mixed    $userData  用户数据，回调函数的第三个参数
      * @param bool     $recursive 是否递归实例数组
      *
      * @return Ary 原实例
@@ -1567,7 +1567,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      *
      * @return Ary 新实例
      */
-    public static function combine(self $key, self $val): self
+    public static function combine(Ary $key, Ary $val): self
     {
         return static::new(
             array_combine($key->val(), $val->val())
@@ -1617,10 +1617,10 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
      * 若第一个参数不为 null 则返回第一个参数的值
      * 若只传入一个参数则直接返回 $default 数组中以 $first 为键名的值
      *
-     * @param null        $first
+     * @param mixed       $first
      * @param string|null $second
      *
-     * @return mixed|null
+     * @return mixed
      */
     protected static function default($first, string $second = null)
     {
