@@ -587,7 +587,7 @@ class Str implements Countable
      * @param bool|null  $caseSensitive 大小写敏感
      * @param int|null   $num           比较字节数，空则为全部，注：比较的是字节数而不是字符数
      *
-     * @return int
+     * @return int|false 参数有误则返回 false
      */
     public function comp($compStr, bool $caseSensitive = null, int $num = null): int
     {

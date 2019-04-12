@@ -1485,7 +1485,7 @@ class Ary implements IteratorAggregate, ArrayAccess, Countable, JsonSerializable
 
     public function __toString(): string
     {
-        return $this->join(static::default('joinGlue'));
+        return $this->join((string)static::default('joinGlue'));
     }
 
     public function __isset($key) : bool
